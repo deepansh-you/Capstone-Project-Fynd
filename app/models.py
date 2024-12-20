@@ -18,10 +18,20 @@ class User(Base):
     user_password = Column(String(100), nullable=False)
     user_phone_number = Column(String(100), nullable=False)
     user_address = Column(String(200))
-    user_role = Column(String(50), default='user', nullable = False)
+    user_role = Column(String(50), default='user', nullable=False)
+    created_at = Column(DateTime, default=get_ist_time)
+    updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
+    user_status = Column(String(50), default='Active', nullable=False)
     
-    orders = relationship('Order', backref='user')
-    shopping_carts = relationship('ShoppingCart')
+    orders = relationship('Order', back_populates='user')
+    shopping_carts = relationship('ShoppingCart', back_populates='user')
+    
+    @property
+    def formatted_created_at(self):
+        if self.created_at:
+            return self.created_at.strftime('%d %b %Y %I:%M %p')
+        return None
+
     @property
     def password(self):
         raise ArithmeticError("Password is not a readable attribute")
@@ -39,8 +49,10 @@ class Category(Base):
     category_id = Column(Integer, primary_key=True, autoincrement=True)
     category_name = Column(String(100), nullable=False, unique=True)
     category_description = Column(String(500))
+    created_at = Column(DateTime, default=get_ist_time)
+    updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
     
-    products = relationship('Product', backref='category')
+    products = relationship('Product', back_populates='category')
 
 
 class Product(Base):
@@ -51,6 +63,12 @@ class Product(Base):
     product_price = Column(Float, nullable=False)
     product_quantity = Column(Integer, nullable=False)
     category_id = Column(Integer, ForeignKey('categories.category_id'))
+    created_at = Column(DateTime, default=get_ist_time)
+    updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
+
+    category = relationship('Category', back_populates='products')
+    order_products = relationship('OrderProduct', back_populates='product')
+    shopping_carts = relationship('ShoppingCart', back_populates='product')
 
 
 class Order(Base):
@@ -60,8 +78,11 @@ class Order(Base):
     order_date = Column(DateTime, default=get_ist_time)
     order_status = Column(String, nullable=False)
     order_total_amount = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=get_ist_time)
+    updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
     
-    products = relationship('OrderProduct', backref='order')
+    user = relationship('User', back_populates='orders')
+    products = relationship('OrderProduct', back_populates='order')
 
 
 class OrderProduct(Base):
@@ -70,6 +91,9 @@ class OrderProduct(Base):
     product_id = Column(Integer, ForeignKey('products.product_id'), primary_key=True)
     order_product_quantity = Column(Integer, nullable=False)
     order_product_price = Column(Float, nullable=False)
+    
+    order = relationship('Order', back_populates='products')
+    product = relationship('Product', back_populates='order_products')
 
 
 class ShoppingCart(Base):
@@ -78,6 +102,8 @@ class ShoppingCart(Base):
     user_id = Column(Integer, ForeignKey('users.user_id'))
     product_id = Column(Integer, ForeignKey('products.product_id'))
     cart_quantity = Column(Integer, default=1)
+    created_at = Column(DateTime, default=get_ist_time)
+    updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
 
-    user = relationship("User", backref="cart_user")
-    product = relationship("Product", backref="shopping_carts")
+    user = relationship("User", back_populates="shopping_carts")
+    product = relationship("Product", back_populates="shopping_carts")

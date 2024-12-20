@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+</head>
+<body>
+    <h1>Checkout</h1>
+    <div class="checkout-summary">
+        {% for product in products %}
+        <div class="product-summary">
+            <p>{{ product.product_name }} - ₹{{ product.product_price }}</p>
+        </div>
+        {% endfor %}
+        <h2>Total: ₹{{ total_price }}</h2>
+        <form action="{{ url_for('main.place_order') }}" method="POST">
+            <button type="submit">Place Order</button>
+        </form>
+    </div>
+</body>
+</html>

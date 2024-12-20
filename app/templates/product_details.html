@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.product_name }}</title>
+</head>
+<body>
+    <h1>{{ product.product_name }}</h1>
+    <p>{{ product.product_description }}</p>
+    <p>₹{{ product.product_price }}</p>
+    <form action="{{ url_for('main.add_to_cart', product_id=product.product_id) }}" method="POST">
+        <button type="submit">Add to Cart</button>
+    </form>
+    <a href="{{ url_for('main.home') }}">Back to Home</a>
+</body>
+</html>

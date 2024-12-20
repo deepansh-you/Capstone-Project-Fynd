@@ -21,7 +21,7 @@
             padding: 20px;
             text-align: center;
         }
-        .stats, .user-list, .notifications {
+        .user-info, .stats, .user-list, .notifications, .product-management {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
@@ -38,7 +38,7 @@
         .card p {
             font-size: 18px;
         }
-        .user-list, .notifications {
+        .user-list, .notifications, .product-management {
             flex-direction: column;
         }
         .table {
@@ -50,6 +50,45 @@
             padding: 10px;
             border: 1px solid #ddd;
         }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button-warning {
+            background-color: #f39c12;
+        }
+        .button-danger {
+            background-color: #e74c3c;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -57,7 +96,32 @@
         <div class="header">
             <h1>Admin Dashboard</h1>
         </div>
+        <a href="{{url_for('auth.logout')}}"><button class="button button-danger">Logout</button></a>
 
+        <!-- Flash Messages Section -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Current User Info Section -->
+        <div class="user-info">
+            <div class="card">
+                <h3>Welcome, {{ current_user.user_name }}!</h3>
+                <p>Email: {{ current_user.user_email }}</p>
+                <p>Phone: {{ current_user.user_phone_number }}</p>
+                <p>Role: {{ current_user.user_role }}</p>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
         <div class="stats">
             <div class="card">
                 <h3>Total Users</h3>
@@ -65,7 +129,7 @@
             </div>
             <div class="card">
                 <h3>Total Sales</h3>
-                <p>${{ total_sales }}</p>
+                <p>₹{{ total_sales }}</p>
             </div>
             <div class="card">
                 <h3>Pending Orders</h3>
@@ -73,6 +137,14 @@
             </div>
         </div>
 
+        <!-- Product Management Section -->
+        <div class="product-management">
+            <h2>Manage Products</h2>
+            <a href="{{ url_for('admin.products') }}" class="button">View All Products</a>
+            <a href="{{ url_for('admin.add_product') }}" class="button">Add New Product</a>
+        </div>
+
+        <!-- User List Section -->
         <div class="user-list">
             <h2>User Management</h2>
             <table class="table">
@@ -81,32 +153,36 @@
                         <th>User ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Role</th>
+                        <th>Registration Date</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
                         <tr>
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.email }}</td>
+                            <td>{{ user.user_id }}</td>
+                            <td>{{ user.user_name }}</td>
+                            <td>{{ user.user_email }}</td>
+                            <td>{{ user.user_role }}</td>
+                            <td>{{ user.formatted_created_at }}</td>
+                            <td>{{ user.user_status }}</td>
                             <td>
-                                <a href="/admin/edit/{{ user.id }}">Edit</a> |
-                                <a href="/admin/delete/{{ user.id }}">Delete</a>
+                                {% if user.user_status == 'active' %}
+                                    <form action="{{ url_for('admin.deactivate_user', user_id=user.user_id) }}" method="POST">
+                                        <button type="submit" class="button button-warning">Deactivate</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('admin.activate_user', user_id=user.user_id) }}" method="POST">
+                                        <button type="submit" class="button">Activate</button>
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-
-        <div class="notifications">
-            <h2>Recent Notifications</h2>
-            <ul>
-                {% for notification in notifications %}
-                    <li>{{ notification }}</li>
-                {% endfor %}
-            </ul>
         </div>
     </div>
 </body>

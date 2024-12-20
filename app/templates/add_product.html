@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+</head>
+<body>
+    <h1>Add New Product</h1>
+
+    <form action="{{ url_for('admin.add_product') }}" method="POST" id="add_product_form">
+        <label for="product_name">Product Name:</label>
+        <input type="text" id="product_name" name="product_name" required><br><br>
+
+        <label for="product_description">Description:</label>
+        <textarea id="product_description" name="product_description" required></textarea><br><br>
+
+        <label for="product_price">Price:</label>
+        <input type="number" id="product_price" name="product_price" required><br><br>
+
+        <label for="product_quantity">Quantity:</label>
+        <input type="number" id="product_quantity" name="product_quantity" required><br><br>
+
+        <label for="category">Category:</label>
+        <select name="category_id" id="category">
+            <option value="">Select Category</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.category_name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="new_category">Or Create New Category:</label>
+        <input type="text" id="new_category" name="new_category" placeholder="New Category (Optional)" oninput="toggleCategory()"><br><br>
+
+        <button type="submit">Add Product</button>
+        
+    </form>
+    <a href="{{url_for('admin.dashboard')}}"><button>Dashboard</button></a>
+
+    <script>
+        function toggleCategory() {
+            const categoryDropdown = document.getElementById('category');
+            const newCategoryInput = document.getElementById('new_category');
+
+            if (newCategoryInput.value.trim() !== "") {
+                categoryDropdown.removeAttribute('required');
+            } else {
+                categoryDropdown.setAttribute('required', 'required');
+            }
+        }
+        window.onload = function() {
+            toggleCategory();
+        }
+    </script>
+</body>
+</html>
