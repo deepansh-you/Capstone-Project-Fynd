@@ -21,7 +21,7 @@ class User(Base):
     user_role = Column(String(50), default='user', nullable=False)
     created_at = Column(DateTime, default=get_ist_time)
     updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
-    user_status = Column(String(50), default='Active', nullable=False)
+    user_status = Column(String(50), default='active', nullable=False)
     
     orders = relationship('Order', back_populates='user')
     shopping_carts = relationship('ShoppingCart', back_populates='user')
@@ -60,11 +60,12 @@ class Product(Base):
     product_id = Column(Integer, primary_key=True, autoincrement=True)
     product_name = Column(String(100), nullable=False)
     product_description = Column(String(500), nullable=True)
-    product_price = Column(Float, nullable=False)
+    product_price = Column(Integer, nullable=False)
     product_quantity = Column(Integer, nullable=False)
     category_id = Column(Integer, ForeignKey('categories.category_id'))
     created_at = Column(DateTime, default=get_ist_time)
     updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
+    image_url = Column(String(200), nullable=True)
 
     category = relationship('Category', back_populates='products')
     order_products = relationship('OrderProduct', back_populates='product')

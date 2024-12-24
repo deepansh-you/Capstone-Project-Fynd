@@ -2,13 +2,21 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from functools import wraps
 from db.engine import get_session
 from app.models import User, Order, Product, OrderProduct, Category
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
+import os
 
 main = Blueprint('main', __name__)
 admin = Blueprint('admin', __name__)
 auth = Blueprint('auth', __name__)
 
+
+UPLOAD_FOLDER = 'app/static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def login_required(f):
     @wraps(f)
@@ -25,6 +33,7 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
+
 
 @admin.route('/')
 @admin_required
@@ -119,6 +128,7 @@ def products():
     session_db.close()
     return render_template('products.html', products=all_products)
 
+
 @admin.route('/products/add', methods=['GET', 'POST'])
 @admin_required
 @login_required
@@ -128,17 +138,29 @@ def add_product():
         try:
             product_name = request.form['product_name']
             product_description = request.form['product_description']
-            product_price = float(request.form['product_price'])
+            product_price = int(request.form['product_price'])
             product_quantity = int(request.form['product_quantity'])
             category_id = request.form.get('category_id')
             new_category = request.form.get('new_category')
 
+            image = request.files.get('product_image')
+            image_filename = None
+            image_url = None
+
+            # Handle image upload
+            if image and allowed_file(image.filename):
+                image_filename = secure_filename(image.filename)
+                image.save(os.path.join(UPLOAD_FOLDER, image_filename))  # Save only in 'uploads' folder
+                image_url = image_filename  # Save relative path
+
+            # Ensure category is selected or created
             if not category_id and not new_category:
                 flash('Please select a category or create a new one.', 'danger')
                 categories = session_db.query(Category).all()
                 session_db.close()
                 return render_template('add_product.html', categories=categories)
 
+            # Add new category if needed
             if new_category:
                 existing_category = session_db.query(Category).filter(Category.category_name == new_category).first()
                 if not existing_category:
@@ -149,12 +171,14 @@ def add_product():
                 else:
                     category_id = existing_category.category_id
 
+            # Create and add new product
             new_product = Product(
                 product_name=product_name,
                 product_description=product_description,
                 product_price=product_price,
                 product_quantity=product_quantity,
-                category_id=category_id
+                category_id=category_id,
+                image_url=image_url  # Corrected image URL
             )
             session_db.add(new_product)
             session_db.commit()
@@ -168,9 +192,12 @@ def add_product():
         finally:
             session_db.close()
 
+    # Query all categories for selection
     categories = session_db.query(Category).all()
     session_db.close()
     return render_template('add_product.html', categories=categories)
+
+
 
 
 
@@ -180,11 +207,11 @@ def add_product():
 def update_product(product_id):
     session_db = get_session()
     product = session_db.query(Product).filter(Product.product_id == product_id).first()
-    
+
     if not product:
         flash('Product not found.', 'danger')
         return redirect(url_for('admin.products'))
-    
+
     if request.method == 'POST':
         try:
             product.product_name = request.form['product_name']
@@ -193,12 +220,21 @@ def update_product(product_id):
             product.product_quantity = int(request.form['product_quantity'])
             category_id = int(request.form['category_id'])
             product.category_id = category_id
-            
-            session_db.commit()
+
+            # Handle image upload for product update
+            image = request.files.get('product_image')
+            if image and allowed_file(image.filename):
+                image_filename = secure_filename(image.filename)
+                image.save(os.path.join(UPLOAD_FOLDER, image_filename))  # Save the image in the uploads folder
+                product.image_url = image_filename  # Save the relative path (no 'static/' prefix)
+
+
+            session_db.commit()  # Commit changes
             flash('Product updated successfully!', 'success')
             return redirect(url_for('admin.products'))
+
         except Exception as e:
-            session_db.rollback()
+            session_db.rollback()  # Rollback if any error occurs
             flash(f'Error updating product: {e}', 'danger')
         finally:
             session_db.close()
@@ -206,6 +242,7 @@ def update_product(product_id):
     categories = session_db.query(Category).all()
     session_db.close()
     return render_template('update_product.html', product=product, categories=categories)
+
 
 
 @admin.route('/products/delete/<int:product_id>', methods=['POST'])
@@ -351,12 +388,15 @@ def deactivate_user(user_id):
 #<-------------------- USER SIDE APP ----------------->#
 
 
+
 @main.route('/')
 def home():
-    session_db = get_session()
-    all_products = session_db.query(Product).options(joinedload(Product.category)).all()
-    session_db.close()
-    return render_template('home.html', products=all_products)
+    session = get_session()
+    try:
+        products = session.query(Product).all()
+    finally:
+        session.close()
+    return render_template('home.html', products=products)
 
 
 @main.route('/product/<int:product_id>/')

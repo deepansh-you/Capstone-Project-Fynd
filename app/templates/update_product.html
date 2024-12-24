@@ -8,7 +8,7 @@
 <body>
     <h1>Update Product</h1>
 
-    <form action="{{ url_for('admin.update_product', product_id=product.product_id) }}" method="POST">
+    <form action="{{ url_for('admin.update_product', product_id=product.product_id) }}" method="POST" enctype="multipart/form-data">
         <label for="product_name">Product Name:</label>
         <input type="text" id="product_name" name="product_name" value="{{ product.product_name }}" required><br><br>
 
@@ -29,6 +29,15 @@
                 </option>
             {% endfor %}
         </select><br><br>
+
+        {% if product.image_url %}
+            <p>Current Product Image:</p>
+            <!-- Display current image if available -->
+            <img src="{{ url_for('static', filename=product.image_url) }}" alt="Product Image" style="max-width: 200px;"><br><br>
+        {% endif %}
+
+        <label for="product_image">New Product Image (Optional):</label>
+        <input type="file" id="product_image" name="product_image" accept="image/*"><br><br>
 
         <button type="submit">Update Product</button>
     </form>

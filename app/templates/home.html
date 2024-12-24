@@ -1,42 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Our Store</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <header>
-        <h1>Welcome to Our Store</h1>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('main.home') }}">Home</a></li>
-                <li><a href="{{ url_for('main.view_cart') }}">Cart</a></li>
-            </ul>
-        </nav>
-    </header>
+{% extends 'base.html' %}
 
-    <main>
-        <h2>Featured Products</h2>
-        <div class="products">
-            {% for product in products %}
-            <div class="product">
-                <img src="{{ product.product_image_url }}" alt="{{ product.product_name }}" class="product-image">
-                <h3>{{ product.product_name }}</h3>
-                <p>{{ product.product_description }}</p>
-                <p><strong>₹{{ product.product_price }}</strong></p>
-                <form action="{{ url_for('main.add_to_cart', product_id=product.product_id) }}" method="POST">
-                    <button type="submit">Add to Cart</button>
-                </form>
-                <a href="{{ url_for('main.product_details', product_id=product.product_id) }}">View Details</a>
+{% block title %}Home - My E-commerce Website{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div id="hero" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="https://via.placeholder.com/1500x500" class="d-block w-100" alt="First slide">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>Welcome to My E-commerce Website</h5>
+                <p>Find the best products at the best prices!</p>
             </div>
-            {% endfor %}
         </div>
-    </main>
+        <!-- Add more carousel items as needed -->
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#hero" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#hero" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
 
-    <footer>
-        <p>&copy; 2024 Our Store</p>
-    </footer>
-</body>
-</html>
+<!-- Product Section -->
+<div class="container mt-5">
+    <h2>Featured Products</h2>
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <img src="{{ url_for('static', filename='uploads/' + (product.image_url if product.image_url else 'default.jpg')) }}" class="card-img-top" alt="{{ product.product_name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.product_name }}</h5>
+                    <p class="card-text">{{g.rupee_symbol}}{{ product.product_price }}</p>
+                    <a href="{{ url_for('main.product_details', product_id=product.product_id) }}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
