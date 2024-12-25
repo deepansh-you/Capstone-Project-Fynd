@@ -7,6 +7,10 @@ body {
     padding: 0;
 }
 
+a{
+    text-decoration: none;
+}
+
 /* Navbar Custom Styling */
 .navbar {
     background-color: #343a40 !important;
@@ -104,6 +108,15 @@ footer p {
     height: 300px !important;
     width: 300px !important;
 }
+
+.carousel-item{
+    transition: transform 0.4s ease;
+    height: 750px;
+}
+
+
+
+
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {

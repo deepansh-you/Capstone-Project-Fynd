@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
 from functools import wraps
 from db.engine import get_session
-from app.models import User, Order, Product, OrderProduct, Category
+from app.models import User, Order, Product, OrderProduct, Category, ShoppingCart
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
+from sqlalchemy import or_
 import os
 
 main = Blueprint('main', __name__)
@@ -391,100 +392,42 @@ def deactivate_user(user_id):
 
 @main.route('/')
 def home():
-    session = get_session()
+    session_db = get_session()
     try:
-        products = session.query(Product).all()
+        products = session_db.query(Product).all()
+
     finally:
-        session.close()
+        session_db.close()
+
     return render_template('home.html', products=products)
+
 
 
 @main.route('/product/<int:product_id>/')
 def product_details(product_id):
-    session_db = get_session()
-    product = session_db.query(Product).filter(Product.product_id == product_id).first()
-    session_db.close()
+    session = get_session()
+    product = session.query(Product).options(joinedload(Product.category)).filter(Product.product_id == product_id).first()
 
     if not product:
-        flash('Product not found!', 'danger')
-        return redirect(url_for('main.home'))
-
+        return "Product not found", 404
     return render_template('product_details.html', product=product)
 
 
-@main.route('/cart/')
-def view_cart():
-    cart = session.get('cart', [])
-    return render_template('cart.html', cart=cart)
 
+@main.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query', '').strip()
+    results = []
+    message = f"Search results for '{query}'"
 
-@main.route('/cart/add/<int:product_id>/', methods=['POST'])
-def add_to_cart(product_id):
-    session_db = get_session()
-    product = session_db.query(Product).filter(Product.product_id == product_id).first()
+    if query:
+        session = get_session()
+        results = session.query(Product).filter(
+            (Product.product_name.ilike(f"%{query}%")) |
+            (Product.category.has(Category.category_name.ilike(f"%{query}%")))
+        ).options(joinedload(Product.category)).all()
 
-    if not product:
-        flash('Product not found!', 'danger')
-        return redirect(url_for('main.home'))
+        if not results:
+            message = f"No results found for '{query}'"
 
-    cart = session.get('cart', [])
-    cart.append(product.product_id)
-    session['cart'] = cart
-    flash(f'{product.product_name} added to cart!', 'success')
-
-    session_db.close()
-    return redirect(url_for('main.home'))
-
-
-@main.route('/cart/remove/<int:product_id>/', methods=['POST'])
-def remove_from_cart(product_id):
-    cart = session.get('cart', [])
-    if product_id in cart:
-        cart.remove(product_id)
-        session['cart'] = cart
-        flash('Product removed from cart!', 'success')
-    return redirect(url_for('main.view_cart'))
-
-
-@main.route('/checkout/')
-def checkout():
-    cart = session.get('cart', [])
-    if not cart:
-        flash('Your cart is empty.', 'warning')
-        return redirect(url_for('main.home'))
-
-    session_db = get_session()
-    products = session_db.query(Product).filter(Product.product_id.in_(cart)).all()
-    session_db.close()
-
-    total_price = sum([product.product_price for product in products])
-
-    return render_template('checkout.html', products=products, total_price=total_price)
-
-
-@main.route('/place_order/', methods=['POST'])
-def place_order():
-    cart = session.get('cart', [])
-    if not cart:
-        flash('Your cart is empty.', 'warning')
-        return redirect(url_for('main.home'))
-
-    session_db = get_session()
-    products = session_db.query(Product).filter(Product.product_id.in_(cart)).all()
-
-    new_order = Order(user_id=session.get('user_id'), order_status='pending')
-
-    session_db.add(new_order)
-    session_db.commit()
-
-    for product in products:
-        order_product = OrderProduct(order_id=new_order.order_id, product_id=product.product_id)
-        session_db.add(order_product)
-
-    session_db.commit()
-
-    session['cart'] = []
-
-    session_db.close()
-    flash('Order placed successfully!', 'success')
-    return redirect(url_for('main.home'))
+    return render_template('search_results.html', query=query, results=results, message=message)

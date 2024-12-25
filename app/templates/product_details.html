@@ -1,17 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ product.product_name }}</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}
+Product Details - {{ product.product_name }}
+{% endblock %}
+
+{% block content %}
     <h1>{{ product.product_name }}</h1>
-    <p>{{ product.product_description }}</p>
-    <p>₹{{ product.product_price }}</p>
-    <form action="{{ url_for('main.add_to_cart', product_id=product.product_id) }}" method="POST">
-        <button type="submit">Add to Cart</button>
-    </form>
-    <a href="{{ url_for('main.home') }}">Back to Home</a>
-</body>
-</html>
+    
+    {% if product.image_url %}
+        <div>
+            <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                 alt="{{ product.product_name }}" class="img-fluid">
+        </div>
+    {% endif %}
+    
+    <p><strong>Description:</strong> {{ product.product_description }}</p>
+    <p><strong>Price:</strong> {{ g.rupee_symbol }}{{ product.product_price }}</p>
+    <p><strong>Category:</strong> {{ product.category.category_name }}</p>
+    
+    {% if product.product_quantity <= 10 %}
+        <p>Only {{ product.product_quantity }} left in stock!</p>
+    {% elif product.product_quantity > 10 %}
+        <p>In stock</p>
+    {% else %}
+        <p>Out of stock</p>
+    {% endif %}
+
+{% endblock %}

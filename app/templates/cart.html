@@ -1,27 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart</title>
-</head>
-<body>
-    <h1>Your Cart</h1>
-    <div class="cart-items">
-        {% if cart %}
-            {% for product_id in cart %}
-                {% set product = products[loop.index - 1] %}
-                <div class="cart-item">
-                    <p>{{ product.product_name }} - ₹{{ product.product_price }}</p>
-                    <form action="{{ url_for('main.remove_from_cart', product_id=product.product_id) }}" method="POST">
-                        <button type="submit">Remove</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>Your cart is empty.</p>
-        {% endif %}
-    </div>
-    <a href="{{ url_for('main.checkout') }}">Proceed to Checkout</a>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+    <h1>Your Shopping Cart</h1>
+
+    {% if cart_item_count == 0 %}
+        <p>Your cart is empty.</p>
+    {% else %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ g.rupee_symbol }}{{ item.product.product_price }}</td>
+                        <td>{{ item.cart_quantity }}</td>
+                        <td>{{ g.rupee_symbol }}{{ item.cart_quantity * item.product.product_price }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Total: {{ g.rupee_symbol }}{{ cart_item_count * item.product.product_price }}</h3>
+
+        <a href="{{ url_for('main.checkout') }}" class="btn btn-success">Proceed to Checkout</a>
+    {% endif %}
+{% endblock %}
