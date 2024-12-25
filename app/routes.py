@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, g
 from functools import wraps
 from db.engine import get_session
 from app.models import User, Order, Product, OrderProduct, Category, ShoppingCart
@@ -34,6 +34,18 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
+
+@main.before_request
+def before_request():
+    user_id = session.get('user_id')
+    if user_id:
+        db_session = get_session()
+        products_in_cart = db_session.query(ShoppingCart).filter_by(user_id=user_id).all()
+        cart_count = sum(item.cart_quantity for item in products_in_cart)
+        g.cart_count = cart_count
+    else:
+        g.cart_count = 0
+
 
 
 @admin.route('/')
@@ -148,20 +160,17 @@ def add_product():
             image_filename = None
             image_url = None
 
-            # Handle image upload
             if image and allowed_file(image.filename):
                 image_filename = secure_filename(image.filename)
-                image.save(os.path.join(UPLOAD_FOLDER, image_filename))  # Save only in 'uploads' folder
-                image_url = image_filename  # Save relative path
+                image.save(os.path.join(UPLOAD_FOLDER, image_filename))
+                image_url = image_filename
 
-            # Ensure category is selected or created
             if not category_id and not new_category:
                 flash('Please select a category or create a new one.', 'danger')
                 categories = session_db.query(Category).all()
                 session_db.close()
                 return render_template('add_product.html', categories=categories)
 
-            # Add new category if needed
             if new_category:
                 existing_category = session_db.query(Category).filter(Category.category_name == new_category).first()
                 if not existing_category:
@@ -172,14 +181,13 @@ def add_product():
                 else:
                     category_id = existing_category.category_id
 
-            # Create and add new product
             new_product = Product(
                 product_name=product_name,
                 product_description=product_description,
                 product_price=product_price,
                 product_quantity=product_quantity,
                 category_id=category_id,
-                image_url=image_url  # Corrected image URL
+                image_url=image_url
             )
             session_db.add(new_product)
             session_db.commit()
@@ -193,7 +201,6 @@ def add_product():
         finally:
             session_db.close()
 
-    # Query all categories for selection
     categories = session_db.query(Category).all()
     session_db.close()
     return render_template('add_product.html', categories=categories)
@@ -222,20 +229,19 @@ def update_product(product_id):
             category_id = int(request.form['category_id'])
             product.category_id = category_id
 
-            # Handle image upload for product update
             image = request.files.get('product_image')
             if image and allowed_file(image.filename):
                 image_filename = secure_filename(image.filename)
-                image.save(os.path.join(UPLOAD_FOLDER, image_filename))  # Save the image in the uploads folder
-                product.image_url = image_filename  # Save the relative path (no 'static/' prefix)
+                image.save(os.path.join(UPLOAD_FOLDER, image_filename))
+                product.image_url = image_filename
 
 
-            session_db.commit()  # Commit changes
+            session_db.commit()
             flash('Product updated successfully!', 'success')
             return redirect(url_for('admin.products'))
 
         except Exception as e:
-            session_db.rollback()  # Rollback if any error occurs
+            session_db.rollback()
             flash(f'Error updating product: {e}', 'danger')
         finally:
             session_db.close()
@@ -386,7 +392,19 @@ def deactivate_user(user_id):
 
 
 
+
+
+
+
+
+
 #<-------------------- USER SIDE APP ----------------->#
+
+
+
+
+
+
 
 
 
@@ -431,3 +449,99 @@ def search():
             message = f"No results found for '{query}'"
 
     return render_template('search_results.html', query=query, results=results, message=message)
+
+@main.route('/cart/')
+def view_cart():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to view your cart", "warning")
+        return redirect(url_for('auth.login'))
+
+    db_session = get_session()
+    products_in_cart = db_session.query(ShoppingCart).filter_by(user_id=user_id).all()
+    total_price = sum(item.product.product_price * item.cart_quantity for item in products_in_cart)
+    cart_count = sum(item.cart_quantity for item in products_in_cart)
+    return render_template('cart.html', products_in_cart=products_in_cart, total_price=total_price, cart_count=cart_count)
+
+
+@main.route('/add_to_cart/<int:product_id>/', methods=['POST'])
+def add_to_cart(product_id):
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        flash("You must be logged in to add items to the cart.", "warning")
+        return redirect(url_for('auth.login'))
+
+    quantity = int(request.form.get('quantity'))
+
+    session_db = get_session()
+
+    product = session_db.query(Product).get(product_id)
+    if not product:
+        flash("Product not found.", "error")
+        return redirect(url_for('main.home'))
+
+    if product.product_quantity < quantity:
+        flash("Not enough stock available.", "warning")
+        return redirect(url_for('main.product_detail', product_id=product_id))
+    
+    cart_item = session_db.query(ShoppingCart).filter_by(user_id=user_id, product_id=product_id).first()
+
+    if cart_item:
+        cart_item.cart_quantity += quantity
+    else:
+        cart_item = ShoppingCart(user_id=user_id, product_id=product_id, cart_quantity=quantity)
+        session_db.add(cart_item)
+
+    session_db.commit()
+    flash("Item added to cart successfully.", "success")
+    
+    return redirect(url_for('main.view_cart'))
+
+@main.route('/update_cart/<int:cart_id>/', methods=['POST'])
+def update_cart(cart_id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to update your cart", "warning")
+        return redirect(url_for('auth.login'))
+
+    action = request.form.get('action')
+
+    db_session = get_session()
+
+    cart_item = db_session.query(ShoppingCart).filter_by(cart_id=cart_id, user_id=user_id).first()
+
+    if action == 'increase':
+        cart_item.cart_quantity += 1
+    elif action == 'decrease' and cart_item.cart_quantity > 1:
+        cart_item.cart_quantity -= 1
+
+    db_session.commit()
+    return redirect(url_for('main.view_cart'))
+
+
+@main.route('/remove_from_cart/<int:cart_id>', methods=['POST'])
+def remove_from_cart(cart_id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to remove items from your cart", "warning")
+        return redirect(url_for('auth.login'))
+
+    db_session = get_session()
+    cart_item = db_session.query(ShoppingCart).filter_by(cart_id=cart_id, user_id=user_id).first()
+
+    if cart_item:
+        db_session.delete(cart_item)
+        db_session.commit()
+
+    return redirect(url_for('main.view_cart'))
+
+def get_cart_count(user_id):
+    session = get_session()
+    user_cart = session.query(ShoppingCart).filter(ShoppingCart.user_id == user_id).all()
+    return len(user_cart)
+
+
