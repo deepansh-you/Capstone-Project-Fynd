@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash, g
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, g, current_app
 from functools import wraps
 from db.engine import get_session
 from app.models import User, Order, Product, OrderProduct, Category, ShoppingCart
@@ -6,7 +6,12 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_
+from datetime import datetime
 import os
+import requests
+from flask_mail import Message
+from cashfree import CashFree
+
 
 main = Blueprint('main', __name__)
 admin = Blueprint('admin', __name__)
@@ -397,7 +402,6 @@ def deactivate_user(user_id):
 
 
 
-
 #<-------------------- USER SIDE APP ----------------->#
 
 
@@ -544,4 +548,147 @@ def get_cart_count(user_id):
     user_cart = session.query(ShoppingCart).filter(ShoppingCart.user_id == user_id).all()
     return len(user_cart)
 
+
+@main.route('/checkout/', methods=['GET', 'POST'])
+def checkout():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to proceed with checkout", "warning")
+        return redirect(url_for('auth.login'))
+
+    db_session = get_session()
+    user = db_session.query(User).filter_by(user_id=user_id).first()
+
+    if request.method == 'POST':
+        user_name = request.form.get('user_name')
+        user_phone_number = request.form.get('user_phone_number')
+        user_address = request.form.get('user_address')
+        user_email = request.form.get('user_email')
+
+        flash("Your order has been placed successfully!", "success")
+        return redirect(url_for('main.home'))
+
+    user_details = {
+        'user_name': user.user_name if user else '',
+        'user_phone_number': user.user_phone_number if user else '',
+        'user_address': user.user_address if user else '',
+        'user_email': user.user_email if user else '',
+    }
+
+    return render_template('checkout.html', user_details=user_details)
+
+@main.route('/payment', methods=['GET', 'POST'])
+def payment():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Please log in to proceed to payment.", "warning")
+        return redirect(url_for('auth.login'))
+
+    db_session = get_session()
+    products_in_cart = db_session.query(ShoppingCart).filter_by(user_id=user_id).all()
+    total_price = sum(item.product.product_price * item.cart_quantity for item in products_in_cart)
+
+    if request.method == 'POST':
+        # If the request comes from the checkout page (form with user details)
+        if 'user_name' in request.form:
+            user_name = request.form.get('user_name')
+            user_phone_number = request.form.get('user_phone_number')
+            user_address = request.form.get('user_address')
+            user_email = request.form.get('user_email')
+
+            # Store user details, for example in session or database
+            session['user_name'] = user_name
+            session['user_phone_number'] = user_phone_number
+            session['user_address'] = user_address
+            session['user_email'] = user_email
+
+            # Redirect to payment page to fill payment details
+            return redirect(url_for('main.payment'))
+
+        # If the request comes from the payment page (form with payment details)
+        card_number = request.form.get('card_number')
+        expiry_date = request.form.get('expiry_date')
+        cvv = request.form.get('cvv')
+
+        if not card_number or not expiry_date or not cvv:
+            flash("Please fill in all payment details.", "danger")
+            return redirect(url_for('main.payment'))
+
+        # Create the order record
+        order = Order(user_id=user_id, order_status='confirmed', order_total_amount=total_price)
+        db_session.add(order)
+        db_session.commit()  # Commit first to generate order ID
+
+        # Add products to order
+        for item in products_in_cart:
+            product = item.product
+            order_product = OrderProduct(
+                order_id=order.order_id,
+                product_id=item.product_id,
+                order_product_quantity=item.cart_quantity,
+                order_product_price=product.product_price
+            )
+            db_session.add(order_product)
+
+        # Optionally, clear the user's shopping cart after the order is placed
+        db_session.query(ShoppingCart).filter_by(user_id=user_id).delete()
+        db_session.commit()
+
+        # Send the order confirmation email
+        user_email = session.get('user_email')  # Get user email from session
+        send_order_confirmation_email(user_email, order)
+
+        flash("Your payment was successful! Your order has been confirmed.", "success")
+        return redirect(url_for('main.order_confirmation_page'))
+
+    return render_template('payment.html', products_in_cart=products_in_cart, total_price=total_price)
+
+
+
+def send_order_confirmation_email(user_email, order):
+
+    db_session = get_session()
+    order_products = db_session.query(OrderProduct).filter_by(order_id=order.order_id).all()
+
+    email_body = f"Your order (ID: {order.order_id}) has been successfully placed. We will notify you once it's shipped.\n\n"
+    email_body += "Order Details:\n"
+
+    for order_product in order_products:
+        product = order_product.product  
+        email_body += f"- {product.product_name} x {order_product.order_product_quantity}\n"
+
+    msg = Message(
+        'Order Confirmation - PrimeLane',
+        recipients=[user_email],
+        body=email_body
+    )
+
+    try:
+        current_app.extensions['mail'].send(msg)
+    except Exception as e:
+        print(f"An error occurred while sending the email: {e}")
+
+
+
+@main.route('/order-confirmation-page')
+def order_confirmation_page():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to view your order.", "warning")
+        return redirect(url_for('auth.login'))
+
+    db_session = get_session()
+
+    products_in_cart = db_session.query(ShoppingCart).options(joinedload(ShoppingCart.product)).filter_by(user_id=user_id).all()
+
+    total_price = 0
+    for item in products_in_cart:
+        if item.product:
+            total_price += item.product.product_price * item.cart_quantity
+        else:
+            print(f"Warning: Missing product for cart item {item.cart_id}")
+
+    return render_template('order_confirmation.html', products_in_cart=products_in_cart, total_price=total_price)
 

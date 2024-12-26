@@ -1,10 +1,21 @@
 /* General Body Styles */
+@font-face {
+    font-family: agrandir;
+    src: url(../fonts/Agrandir-WideLight.otf);
+  }
+
+*{
+    box-sizing: border-box;
+    font-family: agrandir;
+}
+
 body {
     background-color: #f9f9f9; /* Light gray background */
     font-family: Arial, sans-serif; /* Clean font */
     color: #343a40; /* Dark gray text */
     margin: 0;
     padding: 0;
+    background-clip: content-box;
 }
 
 a{
@@ -12,10 +23,6 @@ a{
 }
 
 /* Navbar Custom Styling */
-.navbar {
-    background-color: #343a40 !important;
-}
-
 .navbar-brand {
     font-weight: bold;
     color: #ffffff !important;
@@ -28,7 +35,7 @@ a{
 }
 
 .navbar-nav .nav-link:hover {
-    color: #007bff !important;
+    color: #e21e8a !important;
 }
 
 .navbar-toggler-icon {
@@ -37,12 +44,12 @@ a{
 
 /* Active link */
 .navbar-nav .nav-item.active .nav-link {
-    color: #007bff !important;
+    color: #e21e8a !important;
 }
 
 /* Hero Section */
 h1.display-4 {
-    color: #007bff;
+    color: #C0C0C0;
     margin-top: 2rem;
     font-weight: bold;
 }
@@ -55,6 +62,15 @@ p.lead {
     padding: 10px 20px;
     font-size: 1.2rem;
     border-radius: 5px;
+}
+
+.searchBtn{
+border-radius: 10px;
+}
+
+.searchBtn:hover{
+    background-color: #e21e8a;
+    color: #ffffff;
 }
 
 /* Cards Section */
@@ -109,12 +125,25 @@ footer p {
     width: 300px !important;
 }
 
-.carousel-item{
-    transition: transform 0.4s ease;
-    height: 750px;
+.homeImg{
+    width: 100%;
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
+.welcomeHome{
+    width: 100%;
+}
 
+.navbar{
+    background-color: #000000 !important;
+    height: 65px;
+}
+
+.footer{
+    background-color: #000000 !important;
+}
 
 
 

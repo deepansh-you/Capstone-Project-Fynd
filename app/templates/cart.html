@@ -41,6 +41,7 @@ Cart - PrimeLane
             </tbody>
         </table>
         <h3>Total: {{ g.rupee_symbol }}{{ total_price }}</h3>
+        <a href="{{ url_for('main.checkout') }}" class="btn btn-primary">Proceed to Checkout</a>
     {% else %}
         <p>Your cart is empty.</p>
     {% endif %}

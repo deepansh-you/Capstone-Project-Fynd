@@ -2,7 +2,9 @@ from flask import Flask, g
 from flask_migrate import Migrate
 from db.engine import engine, Base, get_session, init_db
 from app.routes import main, admin, auth
+from flask_mail import Mail
 
+mail=Mail()
 
 def create_app():
     app = Flask(__name__)
@@ -13,6 +15,8 @@ def create_app():
     @app.before_request
     def before_request():
         g.rupee_symbol = '₹'
+        
+    mail.init_app(app)
 
     Migrate(app, engine)
 
