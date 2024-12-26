@@ -12,5 +12,3 @@ class Config:
     MAIL_USERNAME = 'dpanshyou@gmail.com'
     MAIL_PASSWORD = 'ahktorkxptvojdrn'
     MAIL_DEFAULT_SENDER = 'dpanshyou@gmail.com'
-    CASHFREE_APP_ID = 'TEST10400989cc914104df4af9926ff098900401'
-    CASHFREE_SECRET_KEY = 'cfsk_ma_test_ba02bb37d277c5b4019c0432569fceec_2d081f0f'
