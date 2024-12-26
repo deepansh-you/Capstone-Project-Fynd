@@ -6,11 +6,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_
-from datetime import datetime
 import os
-import requests
 from flask_mail import Message
-from cashfree import CashFree
 
 
 main = Blueprint('main', __name__)
