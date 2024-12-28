@@ -17,7 +17,7 @@ class User(Base):
     user_email = Column(String(100), nullable=False, unique=True)
     user_password = Column(String(100), nullable=False)
     user_phone_number = Column(String(100), nullable=False)
-    user_address = Column(String(200))
+    user_address = Column(String(200), default="")
     user_role = Column(String(50), default='user', nullable=False)
     created_at = Column(DateTime, default=get_ist_time)
     updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
@@ -76,6 +76,8 @@ class Order(Base):
     __tablename__ = 'orders'
     order_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.user_id'))
+    payment_id = Column(String(100), nullable=True)
+    payment_status = Column(String(50), default="Pending", nullable=False) 
     order_date = Column(DateTime, default=get_ist_time)
     order_status = Column(String, nullable=False)
     order_total_amount = Column(Float, nullable=False)
