@@ -6,7 +6,7 @@ Checkout - PrimeLane
 
 {% block content %}
     <h1>Checkout</h1>
-    <form method="POST" action="{{ url_for('main.payment') }}">
+    <form method="POST" action="{{ url_for('main.checkout') }}">
         <div class="mb-3">
             <label for="user_name" class="form-label">Name</label>
             <input type="text" id="user_name" name="user_name" class="form-control" 

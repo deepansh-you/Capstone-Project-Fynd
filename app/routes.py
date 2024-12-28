@@ -558,14 +558,25 @@ def checkout():
     user = db_session.query(User).filter_by(user_id=user_id).first()
 
     if request.method == 'POST':
+        # Get user details from the form
         user_name = request.form.get('user_name')
         user_phone_number = request.form.get('user_phone_number')
         user_address = request.form.get('user_address')
         user_email = request.form.get('user_email')
 
-        flash("Your order has been placed successfully!", "success")
-        return redirect(url_for('main.home'))
+        # Store these details in session or database if needed
+        session['user_name'] = user_name
+        session['user_phone_number'] = user_phone_number
+        session['user_address'] = user_address
+        session['user_email'] = user_email
 
+        # Flash success message
+        flash("Your details have been saved. Proceed to payment.", "success")
+
+        # Redirect to the payment page
+        return redirect(url_for('main.payment'))
+
+    # Pre-fill form with existing user data (if available)
     user_details = {
         'user_name': user.user_name if user else '',
         'user_phone_number': user.user_phone_number if user else '',
@@ -575,35 +586,37 @@ def checkout():
 
     return render_template('checkout.html', user_details=user_details)
 
-@main.route('/payment', methods=['GET', 'POST'])
+
+@main.route('/payment/', methods=['GET', 'POST'])
 def payment():
     user_id = session.get('user_id')
+    
+    # Ensure the user is logged in before proceeding
     if not user_id:
         flash("Please log in to proceed to payment.", "warning")
         return redirect(url_for('auth.login'))
 
     db_session = get_session()
+    
+    # Fetch the products in the user's shopping cart
     products_in_cart = db_session.query(ShoppingCart).filter_by(user_id=user_id).all()
     total_price = sum(item.product.product_price * item.cart_quantity for item in products_in_cart)
 
+    # Handle the POST request when the user submits the payment form
     if request.method == 'POST':
-        # If the request comes from the checkout page (form with user details)
-        if 'user_name' in request.form:
-            user_name = request.form.get('user_name')
-            user_phone_number = request.form.get('user_phone_number')
-            user_address = request.form.get('user_address')
-            user_email = request.form.get('user_email')
+        # Extract user data (from session or from the form if it's not stored)
+        user_name = request.form.get('user_name', session.get('user_name'))
+        user_phone_number = request.form.get('user_phone_number', session.get('user_phone_number'))
+        user_address = request.form.get('user_address', session.get('user_address'))
+        user_email = request.form.get('user_email', session.get('user_email'))
 
-            # Store user details, for example in session or database
-            session['user_name'] = user_name
-            session['user_phone_number'] = user_phone_number
-            session['user_address'] = user_address
-            session['user_email'] = user_email
+        # Store or update user data in session
+        session['user_name'] = user_name
+        session['user_phone_number'] = user_phone_number
+        session['user_address'] = user_address
+        session['user_email'] = user_email
 
-            # Redirect to payment page to fill payment details
-            return redirect(url_for('main.payment'))
-
-        # If the request comes from the payment page (form with payment details)
+        # Validate card details
         card_number = request.form.get('card_number')
         expiry_date = request.form.get('expiry_date')
         cvv = request.form.get('cvv')
@@ -612,12 +625,12 @@ def payment():
             flash("Please fill in all payment details.", "danger")
             return redirect(url_for('main.payment'))
 
-        # Create the order record
+        # Create a new order record
         order = Order(user_id=user_id, order_status='confirmed', order_total_amount=total_price)
         db_session.add(order)
-        db_session.commit()  # Commit first to generate order ID
+        db_session.commit()
 
-        # Add products to order
+        # Add each product in the cart to the order
         for item in products_in_cart:
             product = item.product
             order_product = OrderProduct(
@@ -628,12 +641,11 @@ def payment():
             )
             db_session.add(order_product)
 
-        # Optionally, clear the user's shopping cart after the order is placed
+        # Clear the user's shopping cart
         db_session.query(ShoppingCart).filter_by(user_id=user_id).delete()
         db_session.commit()
 
         # Send the order confirmation email
-        user_email = session.get('user_email')  # Get user email from session
         send_order_confirmation_email(user_email, order)
 
         flash("Your payment was successful! Your order has been confirmed.", "success")

@@ -7,7 +7,6 @@ Payment - PrimeLane
 {% block content %}
 <h1>Proceed to Payment</h1>
 
-<!-- Display order summary -->
 <h2>Order Summary</h2>
 <ul>
     {% for item in products_in_cart %}
@@ -16,23 +15,109 @@ Payment - PrimeLane
 </ul>
 <h3>Total: {{ g.rupee_symbol }}{{ total_price }}</h3>
 
-<!-- Payment form -->
 <h2>Enter Payment Details</h2>
-<form method="POST" action="{{ url_for('main.payment') }}">
+<form method="POST" action="{{ url_for('main.payment') }}" onsubmit="return validateForm()">
     <div class="form-group">
         <label for="card_number">Card Number</label>
-        <input type="text" class="form-control" name="card_number" id="card_number" required>
+        <input type="text" class="form-control" name="card_number" id="card_number" required maxlength="19" placeholder="Enter your card number" oninput="validateCardNumber()">
+        <small id="card_number_feedback"></small>
     </div>
     <div class="form-group">
-        <label for="expiry_date">Expiry Date</label>
-        <input type="text" class="form-control" name="expiry_date" id="expiry_date" required placeholder="MM/YY">
+        <label for="expiry_date">Expiry Date (MM/YY)</label>
+        <input type="text" class="form-control" name="expiry_date" id="expiry_date" required placeholder="MM/YY" maxlength="5" oninput="autoFormatExpiryDate()">
+        <small id="expiry_date_feedback"></small>
     </div>
     <div class="form-group">
         <label for="cvv">CVV</label>
-        <input type="text" class="form-control" name="cvv" id="cvv" required>
+        <input type="text" class="form-control" name="cvv" id="cvv" required maxlength="4" placeholder="CVV" oninput="validateCVV()">
+        <small id="cvv_feedback"></small>
     </div>
     <button type="submit" class="btn btn-primary">Proceed to Payment</button>
 </form>
 
+<script>
+    function autoFormatExpiryDate() {
+        const expiryDateInput = document.getElementById("expiry_date");
+        let value = expiryDateInput.value;
+
+        value = value.replace(/\D/g, "");
+
+        if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+
+        expiryDateInput.value = value;
+    }
+
+    function validateCardNumber() {
+        const cardNumber = document.getElementById("card_number").value;
+        const feedback = document.getElementById("card_number_feedback");
+        const regex = /^[0-9]{13,19}$/;
+
+        if (regex.test(cardNumber)) {
+            feedback.textContent = "Valid card number.";
+            feedback.style.color = "green";
+        } else {
+            feedback.textContent = "Card number must be between 13 and 19 digits.";
+            feedback.style.color = "red";
+        }
+    }
+
+    function validateExpiryDate() {
+        const expiryDate = document.getElementById("expiry_date").value;
+        const feedback = document.getElementById("expiry_date_feedback");
+        const regex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+        const today = new Date();
+        const [month, year] = expiryDate.split("/");
+
+        if (regex.test(expiryDate)) {
+            const expiryYear = parseInt("20" + year, 10);
+            const expiryMonth = parseInt(month, 10);
+            const expiryDateObj = new Date(expiryYear, expiryMonth - 1);
+
+            if (expiryDateObj < today) {
+                feedback.textContent = "Please enter a valid expiry date";
+                feedback.style.color = "red";
+            } else {
+                feedback.textContent = "Valid expiration date.";
+                feedback.style.color = "green";
+            }
+        } else {
+            feedback.textContent = "Expiration date must be in MM/YY format.";
+            feedback.style.color = "red";
+        }
+    }
+
+    function validateCVV() {
+        const cvv = document.getElementById("cvv").value;
+        const feedback = document.getElementById("cvv_feedback");
+        const regex = /^[0-9]{3,4}$/;
+
+        if (regex.test(cvv)) {
+            feedback.textContent = "Valid CVV.";
+            feedback.style.color = "green";
+        } else {
+            feedback.textContent = "CVV must be 3 or 4 digits.";
+            feedback.style.color = "red";
+        }
+    }
+
+    function validateForm() {
+        validateCardNumber();
+        validateExpiryDate();
+        validateCVV();
+
+        const cardValid = document.getElementById("card_number_feedback").style.color === "green";
+        const expiryValid = document.getElementById("expiry_date_feedback").style.color === "green";
+        const cvvValid = document.getElementById("cvv_feedback").style.color === "green";
+
+        if (!cardValid || !expiryValid || !cvvValid) {
+            alert("Please correct the highlighted errors before submitting.");
+            return false;
+        }
+
+        return true;
+    }
+</script>
 
 {% endblock %}
