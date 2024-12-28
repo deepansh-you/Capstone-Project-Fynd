@@ -689,3 +689,43 @@ def order_confirmation_page():
 
     return render_template('order_confirmation.html', products_in_cart=products_in_cart, total_price=total_price)
 
+
+@main.route('/profile', methods=['GET', 'POST'])
+def profile():
+    user_id = session.get('user_id')
+
+    db_session = get_session()
+    user = db_session.query(User).get(user_id)
+
+    if request.method == 'POST':
+        user_name = request.form['user_name']
+        user_email = request.form['user_email']
+        user_phone_number = request.form['user_phone_number']
+        user_address = request.form['user_address']
+        password = request.form['password']
+
+        profile_updated = False
+        
+        if user.user_name != user_name:
+            user.user_name = user_name
+            profile_updated = True
+        if user.user_email != user_email:
+            user.user_email = user_email
+            profile_updated = True
+        if user.user_phone_number != user_phone_number:
+            user.user_phone_number = user_phone_number
+            profile_updated = True
+        if user.user_address != user_address:
+            user.user_address = user_address
+            profile_updated = True
+        if password:
+            user.password = generate_password_hash(password)
+            flash('Password changed successfully', 'success')
+        if profile_updated:
+            flash('Profile updated successfully', 'success')
+
+        db_session.commit()
+
+        return redirect(url_for('main.profile'))
+
+    return render_template('profile.html', user=user)
