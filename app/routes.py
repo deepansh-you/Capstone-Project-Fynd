@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_
-import os
+import os, uuid
 from flask_mail import Message
 
 
@@ -68,9 +68,15 @@ def admin_redirect():
 @login_required
 def dashboard():
     session_db = get_session()
+    
     total_users = session_db.query(User).count()
-    total_sales_query = session_db.query(Product.product_price).join(OrderProduct).join(Order).filter(Order.order_status == 'completed').all()
+    total_sales_query = session_db.query(
+        (Product.product_price * OrderProduct.order_product_quantity)
+    ).join(OrderProduct).join(Order).filter(Order.order_status == 'confirmed').all()
+    
     total_sales = sum(price[0] for price in total_sales_query)
+    total_products = session_db.query(Product).count()
+    
     pending_orders = session_db.query(Order).filter(Order.order_status == 'pending').count()
     current_user = session_db.query(User).filter(User.user_id == session.get('user_id')).first()
     users = session_db.query(User).all()
@@ -83,60 +89,42 @@ def dashboard():
 
     session_db.close()
 
-    return render_template('admin_dashboard.html', 
+    return render_template('admin/admin_dashboard.html', 
                            total_users=total_users, 
                            total_sales=total_sales, 
                            pending_orders=pending_orders,
                            users=users,
                            notifications=notifications,
-                           current_user=current_user)
-
-@admin.route('/user/delete/<int:user_id>', methods=['POST'])
+                           current_user=current_user, total_products= total_products, sidebar_hidden=True)
+    
+    
+@admin.route('/users/')
 @admin_required
 @login_required
-def delete_user(user_id):
-    session_db = get_session()
-    try:
-        user = session_db.query(User).get(user_id)
-        if user:
-            session_db.delete(user)
-            session_db.commit()
-            flash('User deleted successfully!', 'success')
-        else:
-            flash('User not found.', 'danger')
-    except Exception as e:
-        session_db.rollback()
-        flash(f'Error deleting user: {e}', 'danger')
-    finally:
-        session_db.close()
-
-    return redirect(url_for('admin.dashboard'))
+def users_page():
+    db_session = get_session()
+    users = db_session.query(User).all()
+    return render_template('admin/users_page.html', users=users)
 
 
-@admin.route('/user/edit/<int:user_id>', methods=['GET', 'POST'])
-@admin_required
+@admin.route('/sales/', endpoint='sales_page')
 @login_required
-def edit_user(user_id):
+@admin_required
+def sales_page():
     session_db = get_session()
-    user = session_db.query(User).get(user_id)
-
-    if request.method == 'POST':
-        try:
-            user.user_name = request.form['user_name']
-            user.user_email = request.form['user_email']
-            user.user_role = request.form['user_role']
-            user.user_status = request.form['user_status']
-            session_db.commit()
-            flash('User details updated successfully!', 'success')
-            return redirect(url_for('admin.dashboard'))
-        except Exception as e:
-            session_db.rollback()
-            flash(f'Error updating user: {e}', 'danger')
-        finally:
-            session_db.close()
-
+    total_sales_query = session_db.query(OrderProduct.order_product_price, OrderProduct.order_product_quantity).join(Order).filter(Order.order_status == 'confirmed').all()
+    total_sales = sum(price * quantity for price, quantity in total_sales_query)
+    top_products_query = session_db.query(Product.product_name, sum(OrderProduct.order_product_quantity).label('total_quantity')).join(OrderProduct).group_by(Product.product_name).order_by('total_quantity desc').limit(5).all()
     session_db.close()
-    return render_template('edit_user.html', user=user)
+    return render_template('admin/sales_page.html', total_sales=total_sales, top_products=top_products_query)
+
+
+
+@admin.route('/pending-orders/')
+@admin_required
+@login_required
+def pending_orders_page():
+    return render_template('admin/pending_orders_page.html')
 
 
 
@@ -147,10 +135,10 @@ def products():
     session_db = get_session()
     all_products = session_db.query(Product).options(joinedload(Product.category)).all()
     session_db.close()
-    return render_template('products.html', products=all_products)
+    return render_template('admin/products.html', products=all_products)
 
 
-@admin.route('/products/add', methods=['GET', 'POST'])
+@admin.route('/products/add/', methods=['GET', 'POST'])
 @admin_required
 @login_required
 def add_product():
@@ -211,13 +199,10 @@ def add_product():
 
     categories = session_db.query(Category).all()
     session_db.close()
-    return render_template('add_product.html', categories=categories)
+    return render_template('admin/add_product.html', categories=categories)
 
 
-
-
-
-@admin.route('/products/update/<int:product_id>', methods=['GET', 'POST'])
+@admin.route('/products/update/<int:product_id>/', methods=['GET', 'POST'])
 @admin_required
 @login_required
 def update_product(product_id):
@@ -256,30 +241,49 @@ def update_product(product_id):
 
     categories = session_db.query(Category).all()
     session_db.close()
-    return render_template('update_product.html', product=product, categories=categories)
+    return render_template('admin/update_product.html', product=product, categories=categories)
 
 
-
-@admin.route('/products/delete/<int:product_id>', methods=['POST'])
+@admin.route('/products/mark_in_stock/<int:product_id>/', methods=['POST'])
 @admin_required
 @login_required
-def delete_product(product_id):
+def mark_in_stock(product_id):
     session_db = get_session()
     try:
         product = session_db.query(Product).get(product_id)
-        if product:
-            session_db.delete(product)
+        if product and not product.is_deleted:
+            product.product_quantity = max(product.product_quantity, 1)
             session_db.commit()
-            flash('Product deleted successfully!', 'success')
+            flash(f'Product "{product.product_name}" marked as In Stock.', 'success')
         else:
-            flash('Product not found.', 'danger')
+            flash('Product not found or has been deleted.', 'danger')
     except Exception as e:
         session_db.rollback()
-        flash(f'Error deleting product: {e}', 'danger')
+        flash(f'Error marking product as In Stock: {e}', 'danger')
     finally:
         session_db.close()
-    
     return redirect(url_for('admin.products'))
+
+@admin.route('/products/mark_out_of_stock/<int:product_id>/', methods=['POST'])
+@admin_required
+@login_required
+def mark_out_of_stock(product_id):
+    session_db = get_session()
+    try:
+        product = session_db.query(Product).get(product_id)
+        if product and not product.is_deleted:
+            product.product_quantity = 0
+            session_db.commit()
+            flash(f'Product "{product.product_name}" marked as Out of Stock.', 'success')
+        else:
+            flash('Product not found or has been deleted.', 'danger')
+    except Exception as e:
+        session_db.rollback()
+        flash(f'Error marking product as Out of Stock: {e}', 'danger')
+    finally:
+        session_db.close()
+    return redirect(url_for('admin.products'))
+
 
 
 @auth.route('/login/', methods=['POST', 'GET'])
@@ -288,31 +292,32 @@ def login():
     session.pop('role', None)
 
     if request.method == 'POST':
-        email = request.form['email']
+        email = request.form['email'].strip().lower()
         password = request.form['password']
 
         session_db = get_session()
-        user = session_db.query(User).filter(User.user_email == email.lower()).first()
+        user = session_db.query(User).filter(User.user_email == email).first()
 
-        if user and check_password_hash(user.user_password, password):
-            if user.user_status == 'inactive':
-                flash('Your account is deactivated. Please contact the admin.', 'danger')
-                return redirect(url_for('auth.login'))
+        if user:
+            if check_password_hash(user.user_password, password):
+                if user.user_status == 'inactive':
+                    flash('Your account is deactivated. Please contact support!', 'danger')
+                    return redirect(url_for('auth.login'))
 
-            session['user_id'] = user.user_id
-            session['role'] = user.user_role
+                session['user_id'] = user.user_id
+                session['role'] = user.user_role
 
-            if user.user_role == 'admin':
-                return redirect(url_for('admin.dashboard'))
+                return redirect(url_for('admin.dashboard') if user.user_role == 'admin' else url_for('main.home'))
             else:
-                return redirect(url_for('main.home'))
+                flash('Invalid credentials. Please try again.', 'danger')
         else:
-            flash('Invalid credentials. Please try again.', 'danger')
+            flash('No account found with that email.', 'danger')
 
     return render_template('login.html')
 
 
-@auth.route('/register', methods=['GET', 'POST'])
+
+@auth.route('/register/', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form['email'].lower()
@@ -349,10 +354,11 @@ def register():
 
     return render_template('register.html')
 
-@auth.route('/logout')
+@auth.route('/logout/')
 def logout():
     session.pop('user_id', None)
     session.pop('role', None)
+    session.pop('_flashes', None)
     return redirect(url_for('auth.login'))
 
 @admin.route('/user/activate/<int:user_id>', methods=['POST'])
@@ -374,9 +380,10 @@ def activate_user(user_id):
     finally:
         session_db.close()
 
-    return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('admin.users_page'))
 
-@admin.route('/user/deactivate/<int:user_id>', methods=['POST'])
+
+@admin.route('/user/deactivate/<int:user_id>/', methods=['POST'])
 @admin_required
 @login_required
 def deactivate_user(user_id):
@@ -394,8 +401,7 @@ def deactivate_user(user_id):
         flash(f'Error deactivating user: {e}', 'danger')
     finally:
         session_db.close()
-
-    return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('admin.users_page'))
 
 
 
@@ -443,7 +449,7 @@ def product_details(product_id):
 
 
 
-@main.route('/search', methods=['GET'])
+@main.route('/search/', methods=['GET'])
 def search():
     query = request.args.get('query', '').strip()
     results = []
@@ -464,22 +470,16 @@ def search():
 
 @main.route('/category/<int:category_id>/')
 def category_products(category_id):
-    session_db = get_session() # Using Flask-SQLAlchemy session
-
-    # Fetch the category by ID
+    session_db = get_session()
     category = session_db.query(Category).get(category_id)
 
-    # If category doesn't exist, flash a message and redirect to home
     if not category:
         flash("Category not found.", "danger")
         return redirect(url_for('main.home'))
 
-    # Fetch all products in this category
     products = session_db.query(Product).filter(Product.category_id == category_id).all()
 
     return render_template('category_products.html', category=category, products=products)
-
-
 
 
 @main.route('/cart/')
@@ -556,7 +556,7 @@ def update_cart(cart_id):
     return redirect(url_for('main.view_cart'))
 
 
-@main.route('/remove_from_cart/<int:cart_id>', methods=['POST'])
+@main.route('/remove_from_cart/<int:cart_id>/', methods=['POST'])
 def remove_from_cart(cart_id):
     user_id = session.get('user_id')
 
@@ -591,25 +591,20 @@ def checkout():
     user = db_session.query(User).filter_by(user_id=user_id).first()
 
     if request.method == 'POST':
-        # Get user details from the form
         user_name = request.form.get('user_name')
         user_phone_number = request.form.get('user_phone_number')
         user_address = request.form.get('user_address')
         user_email = request.form.get('user_email')
 
-        # Store these details in session or database if needed
         session['user_name'] = user_name
         session['user_phone_number'] = user_phone_number
         session['user_address'] = user_address
         session['user_email'] = user_email
 
-        # Flash success message
         flash("Your details have been saved. Proceed to payment.", "success")
 
-        # Redirect to the payment page
         return redirect(url_for('main.payment'))
 
-    # Pre-fill form with existing user data (if available)
     user_details = {
         'user_name': user.user_name if user else '',
         'user_phone_number': user.user_phone_number if user else '',
@@ -620,36 +615,57 @@ def checkout():
     return render_template('checkout.html', user_details=user_details)
 
 
+def generate_payment_id():
+    return str(uuid.uuid4())
+
+
 @main.route('/payment/', methods=['GET', 'POST'])
 def payment():
     user_id = session.get('user_id')
-    
-    # Ensure the user is logged in before proceeding
+
     if not user_id:
         flash("Please log in to proceed to payment.", "warning")
         return redirect(url_for('auth.login'))
 
     db_session = get_session()
-    
-    # Fetch the products in the user's shopping cart
+
     products_in_cart = db_session.query(ShoppingCart).filter_by(user_id=user_id).all()
     total_price = sum(item.product.product_price * item.cart_quantity for item in products_in_cart)
 
-    # Handle the POST request when the user submits the payment form
+    if request.method == 'GET':
+        pending_order = db_session.query(Order).filter_by(user_id=user_id, order_status='pending').first()
+        if not pending_order:
+            new_order = Order(
+                user_id=user_id,
+                order_status='pending',
+                payment_status='pending',
+                order_total_amount=total_price
+            )
+            db_session.add(new_order)
+            db_session.commit()
+
+            for item in products_in_cart:
+                order_product = OrderProduct(
+                    order_id=new_order.order_id,
+                    product_id=item.product_id,
+                    order_product_quantity=item.cart_quantity,
+                    order_product_price=item.product.product_price * item.cart_quantity
+                )
+                db_session.add(order_product)
+
+            db_session.commit()
+
     if request.method == 'POST':
-        # Extract user data (from session or from the form if it's not stored)
         user_name = request.form.get('user_name', session.get('user_name'))
         user_phone_number = request.form.get('user_phone_number', session.get('user_phone_number'))
         user_address = request.form.get('user_address', session.get('user_address'))
         user_email = request.form.get('user_email', session.get('user_email'))
 
-        # Store or update user data in session
         session['user_name'] = user_name
         session['user_phone_number'] = user_phone_number
         session['user_address'] = user_address
         session['user_email'] = user_email
 
-        # Validate card details
         card_number = request.form.get('card_number')
         expiry_date = request.form.get('expiry_date')
         cvv = request.form.get('cvv')
@@ -658,31 +674,33 @@ def payment():
             flash("Please fill in all payment details.", "danger")
             return redirect(url_for('main.payment'))
 
-        # Create a new order record
-        order = Order(user_id=user_id, order_status='confirmed', order_total_amount=total_price)
-        db_session.add(order)
-        db_session.commit()
+        payment_id = generate_payment_id()
 
-        # Add each product in the cart to the order
-        for item in products_in_cart:
-            product = item.product
-            order_product = OrderProduct(
-                order_id=order.order_id,
-                product_id=item.product_id,
-                order_product_quantity=item.cart_quantity,
-                order_product_price=product.product_price
-            )
-            db_session.add(order_product)
+        order = db_session.query(Order).filter_by(user_id=user_id, order_status='pending').first()
+        if order:
+            order.order_status = 'confirmed'
+            order.payment_status = 'completed'
+            order.payment_id = payment_id
+            db_session.commit()
 
-        # Clear the user's shopping cart
-        db_session.query(ShoppingCart).filter_by(user_id=user_id).delete()
-        db_session.commit()
+            for item in products_in_cart:
+                product = db_session.query(Product).get(item.product_id)
+                if product and product.product_quantity >= item.cart_quantity:
+                    product.product_quantity -= item.cart_quantity
+                else:
+                    flash(f"Not enough stock available for product: {item.product.product_name}. Please adjust your order.", "danger")
+                    db_session.rollback()
+                    return redirect(url_for('main.payment'))
 
-        # Send the order confirmation email
-        send_order_confirmation_email(user_email, order)
+            db_session.commit()
 
-        flash("Your payment was successful! Your order has been confirmed.", "success")
-        return redirect(url_for('main.order_confirmation_page'))
+            db_session.query(ShoppingCart).filter_by(user_id=user_id).delete()
+            db_session.commit()
+
+            send_order_confirmation_email(user_email, order)
+
+            flash("Your payment was successful! Your order has been confirmed.", "success")
+            return redirect(url_for('main.order_confirmation_page'))
 
     return render_template('payment.html', products_in_cart=products_in_cart, total_price=total_price)
 
@@ -713,7 +731,7 @@ def send_order_confirmation_email(user_email, order):
 
 
 
-@main.route('/order-confirmation-page')
+@main.route('/order-confirmation-page/')
 def order_confirmation_page():
     user_id = session.get('user_id')
 
@@ -769,13 +787,12 @@ def profile():
         if profile_updated:
             db_session.commit()
             flash('Profile updated successfully', 'success')
-            session['profile_updated'] = True  # Set session flag for profile update
+            session['profile_updated'] = True
         else:
             db_session.commit()
 
         return redirect(url_for('main.profile'))
 
-    # Remove the flag once it's used to show flash message
     if 'profile_updated' in session:
         session.pop('profile_updated', None)
 

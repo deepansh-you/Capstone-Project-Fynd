@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URI = 'sqlite:///database.db'
 
-engine = create_engine(DATABASE_URI, echo=True)
+engine = create_engine(DATABASE_URI, pool_size=20, max_overflow=20, pool_timeout=30, echo=True)
 
 Base = declarative_base()
 

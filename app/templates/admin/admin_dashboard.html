@@ -1,0 +1,49 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block header_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="centered-container">
+    <div class="user-info">
+        <div class="card">
+            <h3>Welcome, {{ current_user.user_name }}!</h3>
+            <p>Email: {{ current_user.user_email }}</p>
+            <p>Phone: {{ current_user.user_phone_number }}</p>
+            <p>Role: {{ current_user.user_role }}</p>
+        </div>
+    </div>
+
+
+    <div class="stats">
+        <a href="{{ url_for('admin.users_page') }}">
+            <div class="card">
+                <h3>Total Users</h3>
+                <p>{{ total_users }}</p>
+            </div>
+        </a>
+    
+        <a href="{{ url_for('admin.products') }}">
+            <div class="card">
+                <h3>Products</h3>
+                <p>{{ total_products }}</p>
+            </div>
+        </a>
+    
+        <a href="{{ url_for('admin.sales_page') }}">
+            <div class="card">
+                <h3>Total Sales</h3>
+                <p>₹{{ total_sales }}</p>
+            </div>
+        </a>
+    
+        <a href="{{ url_for('admin.pending_orders_page') }}">
+            <div class="card">
+                <h3>Pending Orders</h3>
+                <p>{{ pending_orders }}</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

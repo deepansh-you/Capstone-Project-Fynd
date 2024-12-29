@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/LogoIcon.svg') }}" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+
+            <a href="{{ url_for('admin.dashboard') }}" class="navbar-brand">Dashboard</a>
+
+            <div class="collapse navbar-collapse justify-content-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.users_page') }}" class="nav-link">Users</a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Products
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('admin.products') }}">View All Products</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.add_product') }}">Add Product</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.sales_page') }}" class="nav-link">Sales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.pending_orders_page') }}" class="nav-link">Pending Orders</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="d-flex">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="main-content">
+        <div class="content">
+            {% block content %}
+
+            {% endblock %}
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 PrimeLane. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+</body>
+</html>

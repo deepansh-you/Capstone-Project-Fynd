@@ -1,0 +1,63 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Users Page{% endblock %}
+
+{% block header_title %}Users Page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Flash Messages Section -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- User List Section -->
+    <div class="user-list">
+        <h2>User Management</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Registration Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.user_id }}</td>
+                        <td>{{ user.user_name }}</td>
+                        <td>{{ user.user_email }}</td>
+                        <td>{{ user.user_role }}</td>
+                        <td>{{ user.formatted_created_at }}</td>
+                        <td>{{ user.user_status }}</td>
+                        <td>
+                            {% if user.user_status == 'active' %}
+                                <form action="{{ url_for('admin.deactivate_user', user_id=user.user_id) }}" method="POST">
+                                    <button type="submit" class="button updateBtn">Deactivate</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('admin.activate_user', user_id=user.user_id) }}" method="POST">
+                                    <button type="submit" class="button updateBtn">Activate</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

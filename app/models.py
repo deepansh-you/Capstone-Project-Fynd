@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from datetime import datetime
 import pytz
 from db.engine import Base
@@ -66,6 +66,7 @@ class Product(Base):
     created_at = Column(DateTime, default=get_ist_time)
     updated_at = Column(DateTime, default=get_ist_time, onupdate=get_ist_time)
     image_url = Column(String(200), nullable=True)
+    is_deleted = Column(Boolean, default=False)
 
     category = relationship('Category', back_populates='products')
     order_products = relationship('OrderProduct', back_populates='product')

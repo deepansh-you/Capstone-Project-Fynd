@@ -1,0 +1,62 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Admin - Update Product{% endblock %}
+
+{% block content %}
+    <div class="update-product-container">
+        <h1 class="heading">Update Product</h1>
+
+        <form action="{{ url_for('admin.update_product', product_id=product.product_id) }}" method="POST" enctype="multipart/form-data" class="form">
+
+            <div class="form-group">
+                <label for="product_name">Product Name:</label>
+                <input type="text" id="product_name" name="product_name" value="{{ product.product_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="product_description">Description:</label>
+                <textarea id="product_description" name="product_description" required>{{ product.product_description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="product_price">Price:</label>
+                <input type="number" id="product_price" name="product_price" value="{{ product.product_price }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="product_quantity">Quantity:</label>
+                <input type="number" id="product_quantity" name="product_quantity" value="{{ product.product_quantity }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id">Category:</label>
+                <select name="category_id" id="category_id" required>
+                    {% for category in categories %}
+                        <option value="{{ category.category_id }}" {% if category.category_id == product.category_id %}selected{% endif %}>
+                            {{ category.category_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if product.image_url %}
+                <div class="form-group">
+                    <p>Current Product Image:</p>
+                    <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" alt="Product Image" style="max-width: 200px;">
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="product_image">New Product Image (Optional):</label>
+                <input type="file" id="product_image" name="product_image" accept="image/*">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="button updateBtnLarge button-primary">Update Product</button>
+            </div>
+        </form>
+
+        <br>
+        <button class=" button button-primary updateBtnLarge"><a href="{{ url_for('admin.products') }}" class="updateA">Back to Products</a></button>
+    </div>
+{% endblock %}

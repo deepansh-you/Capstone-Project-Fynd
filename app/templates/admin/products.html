@@ -1,0 +1,56 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Admin - Products{% endblock %}
+
+{% block content %}
+    <div class="main-content">
+                <h1 class="heading" >Products</h1>
+        <!-- Products Table -->
+        <div class="content">
+            <div class="container">
+                <button class="button button-primary updateBtnLarge"><a href="{{ url_for('admin.add_product') }}" class="updateA">Add New Product</a></button>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.product_description }}</td>
+                            <td>{{ g.rupee_symbol }}{{ product.product_price }}</td>
+                            <td>{{ product.product_quantity }}</td>
+                            <td>{{ product.category.category_name }}</td>
+                            <td>
+                                <!-- Update Button -->
+                                <button class="button button-primary updateBtn"><a href="{{ url_for('admin.update_product', product_id=product.product_id) }}" class="button">Update</a></button>
+
+                                {% if product.product_quantity > 0 %}
+                                <!-- Out of Stock Button -->
+                                <form action="{{ url_for('admin.mark_out_of_stock', product_id=product.product_id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="button prodBtnBot button-danger button-primary updateBtn ">Out of Stock</button>
+                                </form>
+                                {% else %}
+                                <!-- In Stock Button -->
+                                <form action="{{ url_for('admin.mark_in_stock', product_id=product.product_id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="button prodBtnBot button-success button-primary updateBtn">In Stock</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
