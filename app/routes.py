@@ -48,6 +48,12 @@ def before_request():
     else:
         g.cart_count = 0
 
+@main.before_request
+def load_categories():
+    db_session = get_session()
+    g.categories = db_session.query(Category).all()
+    db_session.close()
+
 
 
 @admin.route('/')
@@ -414,11 +420,15 @@ def home():
     session_db = get_session()
     try:
         products = session_db.query(Product).all()
+        categories = session_db.query(Category).all()
+        category_products = {}
+        for category in categories:
+            category_products[category.category_id] = category.products[:8]
 
     finally:
         session_db.close()
 
-    return render_template('home.html', products=products)
+    return render_template('home.html', products=products, categories=categories, category_products=category_products)
 
 
 
@@ -450,6 +460,27 @@ def search():
             message = f"No results found for '{query}'"
 
     return render_template('search_results.html', query=query, results=results, message=message)
+
+
+@main.route('/category/<int:category_id>/')
+def category_products(category_id):
+    session_db = get_session() # Using Flask-SQLAlchemy session
+
+    # Fetch the category by ID
+    category = session_db.query(Category).get(category_id)
+
+    # If category doesn't exist, flash a message and redirect to home
+    if not category:
+        flash("Category not found.", "danger")
+        return redirect(url_for('main.home'))
+
+    # Fetch all products in this category
+    products = session_db.query(Product).filter(Product.category_id == category_id).all()
+
+    return render_template('category_products.html', category=category, products=products)
+
+
+
 
 @main.route('/cart/')
 def view_cart():
@@ -499,6 +530,8 @@ def add_to_cart(product_id):
     flash("Item added to cart successfully.", "success")
     
     return redirect(url_for('main.view_cart'))
+
+
 
 @main.route('/update_cart/<int:cart_id>/', methods=['POST'])
 def update_cart(cart_id):
@@ -702,7 +735,7 @@ def order_confirmation_page():
     return render_template('order_confirmation.html', products_in_cart=products_in_cart, total_price=total_price)
 
 
-@main.route('/profile', methods=['GET', 'POST'])
+@main.route('/profile/', methods=['GET', 'POST'])
 def profile():
     user_id = session.get('user_id')
 
@@ -734,10 +767,36 @@ def profile():
             user.password = generate_password_hash(password)
             flash('Password changed successfully', 'success')
         if profile_updated:
+            db_session.commit()
             flash('Profile updated successfully', 'success')
-
-        db_session.commit()
+            session['profile_updated'] = True  # Set session flag for profile update
+        else:
+            db_session.commit()
 
         return redirect(url_for('main.profile'))
 
+    # Remove the flag once it's used to show flash message
+    if 'profile_updated' in session:
+        session.pop('profile_updated', None)
+
     return render_template('profile.html', user=user)
+
+
+
+@main.route('/order-history/', methods=['GET'])
+def order_history():
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        flash("You need to be logged in to view your order history.", 'danger')
+        return redirect(url_for('login'))
+    db_session = get_session()
+
+    orders = db_session.query(Order).filter_by(user_id=user_id).options(
+        joinedload(Order.products).joinedload(OrderProduct.product)
+    ).all()
+
+    if not orders:
+        flash("You have no order history.", 'info')
+    db_session.close()
+    return render_template('order_history.html', orders=orders)

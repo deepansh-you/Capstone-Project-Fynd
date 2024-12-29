@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Profile - PrimeLane
+{% endblock %}
+
+{% block content %}
+<h1>Your Profile</h1>
+
+<!-- Filter out only profile-related flash messages -->
+{% for message in get_flashed_messages(with_categories=true) %}
+    {% if message[0] != 'success' or 'Item added to cart successfully' not in message[1] %}
+        <div class="alert alert-{{ message[0] }} mt-3">
+            {{ message[1] }}
+        </div>
+    {% endif %}
+{% endfor %}
+
+<form method="POST" action="{{ url_for('main.profile') }}">
+    <div class="form-group">
+        <label for="user_name">Name</label>
+        <input type="text" class="form-control" id="user_name" name="user_name" value="{{ user.user_name }}" required>
+    </div>
+    <div class="form-group mt-3">
+        <label for="user_email">Email</label>
+        <input type="email" class="form-control" id="user_email" name="user_email" value="{{ user.user_email }}" required>
+    </div>
+    <div class="form-group mt-3">
+        <label for="user_phone_number">Phone Number</label>
+        <input type="text" class="form-control" id="user_phone_number" name="user_phone_number" value="{{ user.user_phone_number }}">
+    </div>
+    <div class="form-group mt-3">
+        <label for="user_address">Address</label>
+        <textarea class="form-control" id="user_address" name="user_address">{{ user.user_address }}</textarea>
+    </div>
+    <div class="form-group mt-3">
+        <label for="password">Change Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password (optional)">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+</form>
+{% endblock %}

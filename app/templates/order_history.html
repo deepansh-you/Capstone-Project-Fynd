@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Your Order History</h1>
+
+{% if orders %}
+    <ul>
+        {% for order in orders %}
+            <li>
+                <strong>Order ID:</strong> {{ order.order_id }}<br>
+                <strong>Total Amount:</strong> ₹{{ order.order_total_amount }}<br>
+                <strong>Order Date:</strong> {{ order.order_date.strftime('%d %b %Y %I:%M %p') }}<br> <!-- Display order_date -->
+                
+                <!-- Display Products in the Order -->
+                <strong>Products:</strong>
+                <ul>
+                    {% for order_product in order.products %}
+                        <li>{{ order_product.product.product_name }} (Quantity: {{ order_product.order_product_quantity }})</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            <hr>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+{% endblock %}

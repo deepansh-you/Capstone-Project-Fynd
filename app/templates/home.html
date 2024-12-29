@@ -3,27 +3,64 @@
 {% block title %}PrimeLane{% endblock %}
 
 {% block content %}
+<style>
+    .category-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 20px;
+}
+
+.category-scroll .card {
+    flex: 0 0 auto; /* Prevent cards from stretching, ensuring they are the same size */
+    width: 18rem;
+}
+
+.category-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.category-scroll::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+}
+
+.category-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
+
+</style>
 <!-- Hero Section -->
 <div class="welcomeHome">
     <img src="{{url_for('static', filename='images/Background.png')}}" alt="" class="homeImg">
 </div>
 
-<!-- Product Section -->
+<!-- Category Section -->
 <div class="container mt-5">
-    <h2>Featured Products</h2>
+    <h2>Shop by Categories</h2>
+    
     <div class="row">
-        {% for product in products %}
-        <div class="col-md-3 mb-4">
-            <a href="{{ url_for('main.product_details', product_id=product.product_id) }}">
-                <div class="card">
-                    <img src="{{ url_for('static', filename='uploads/' + (product.image_url if product.image_url else 'default.jpg')) }}" class="card-img-top" alt="{{ product.product_name }}">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ product.product_name }}</h5>
-                        <p class="card-text">{{g.rupee_symbol}}{{ product.product_price }}</p>
-                        <button class="btn btn-primary">View Details</button>
-                    </div>
+        {% for category in categories %}
+        <div class="col-md-12 mb-5">
+            <h3>{{ category.category_name }}</h3>
+            <!-- Horizontal Scrolling for Products in Category -->
+            <div class="category-scroll d-flex flex-row overflow-auto">
+                {% for product in category_products[category.category_id] %}
+                <div class="card mx-2" style="width: 18rem;">
+                    <a href="{{ url_for('main.product_details', product_id=product.product_id) }}">
+                        <img src="{{ url_for('static', filename='uploads/' + (product.image_url if product.image_url else 'default.jpg')) }}" class="card-img-top" alt="{{ product.product_name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.product_name }}</h5>
+                            <p class="card-text">{{ g.rupee_symbol }}{{ product.product_price }}</p>
+                        </div>
+                    </a>
                 </div>
-            </a>
+                {% endfor %}
+            </div>
+
+            <!-- Explore More Button -->
+            <a href="{{ url_for('main.category_products', category_id=category.category_id) }}" class="btn btn-secondary mt-4">Explore More</a>
         </div>
         {% endfor %}
     </div>

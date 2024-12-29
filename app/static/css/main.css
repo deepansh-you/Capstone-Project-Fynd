@@ -26,7 +26,13 @@ a{
 .navbar-brand {
     font-weight: bold;
     color: #ffffff !important;
+    width: 100px;
 }
+
+.navLogo{
+    width: 75px;
+}
+
 
 .navbar-nav .nav-link {
     color: #ffffff !important;
@@ -46,6 +52,7 @@ a{
 .navbar-nav .nav-item.active .nav-link {
     color: #e21e8a !important;
 }
+
 
 /* Hero Section */
 h1.display-4 {

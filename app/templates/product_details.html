@@ -15,7 +15,7 @@ Product Details - {{ product.product_name }}
     {% endif %}
     
     <p><strong>Description:</strong> {{ product.product_description }}</p>
-    <p><strong>Price:</strong> {{ g.rupee_symbol }}{{ product.product_price }}</p>
+    <p><strong>Price:</strong> {{ g.rupee_symbol}}{{ product.product_price }}</p>
     <p><strong>Category:</strong> {{ product.category.category_name }}</p>
     
     {% if 1 <= product.product_quantity <= 10 %}
