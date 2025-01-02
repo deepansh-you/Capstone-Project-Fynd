@@ -20,7 +20,6 @@ pem==23.1.0
 pycryptodome==3.21.0
 pydantic==2.10.4
 pydantic_core==2.27.2
-python_version == "3.11"
 pytz==2024.2
 requests==2.32.3
 SQLAlchemy==2.0.36
