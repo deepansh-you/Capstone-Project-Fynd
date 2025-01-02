@@ -5,7 +5,7 @@ from app.models import User, Order, Product, OrderProduct, Category, ShoppingCar
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 import os, uuid
 from flask_mail import Message
 
@@ -89,13 +89,40 @@ def dashboard():
 
     session_db.close()
 
-    return render_template('admin/admin_dashboard.html', 
-                           total_users=total_users, 
-                           total_sales=total_sales, 
-                           pending_orders=pending_orders,
-                           users=users,
-                           notifications=notifications,
-                           current_user=current_user, total_products= total_products, sidebar_hidden=True)
+    return render_template('admin/admin_dashboard.html', total_users=total_users, total_sales=total_sales, pending_orders=pending_orders, users=users,
+                           notifications=notifications, current_user=current_user, total_products= total_products, sidebar_hidden=True)
+    
+
+@admin.route('/sales/', endpoint='sales_page')
+@login_required
+@admin_required
+def sales_page():
+    session_db = get_session()
+    total_sales_query = session_db.query(
+        (Product.product_price * OrderProduct.order_product_quantity)
+    ).join(OrderProduct).join(Order).filter(Order.order_status == 'confirmed').all()
+    
+    total_sales = sum(price[0] for price in total_sales_query)
+
+    top_products_query = (
+        session_db.query(
+            Product.product_name,
+            func.sum(OrderProduct.order_product_quantity).label('total_quantity')
+        )
+        .join(OrderProduct)
+        .group_by(Product.product_name)
+        .order_by(func.sum(OrderProduct.order_product_quantity).desc())
+        .all()
+    )
+
+    session_db.close()
+
+    return render_template(
+        'admin/sales_page.html',
+        total_sales=total_sales,
+        top_products=top_products_query,
+        enumerate=enumerate
+    )
     
     
 @admin.route('/users/')
@@ -107,25 +134,46 @@ def users_page():
     return render_template('admin/users_page.html', users=users)
 
 
-@admin.route('/sales/', endpoint='sales_page')
-@login_required
-@admin_required
-def sales_page():
-    session_db = get_session()
-    total_sales_query = session_db.query(OrderProduct.order_product_price, OrderProduct.order_product_quantity).join(Order).filter(Order.order_status == 'confirmed').all()
-    total_sales = sum(price * quantity for price, quantity in total_sales_query)
-    top_products_query = session_db.query(Product.product_name, sum(OrderProduct.order_product_quantity).label('total_quantity')).join(OrderProduct).group_by(Product.product_name).order_by('total_quantity desc').limit(5).all()
-    session_db.close()
-    return render_template('admin/sales_page.html', total_sales=total_sales, top_products=top_products_query)
-
-
-
 @admin.route('/pending-orders/')
 @admin_required
 @login_required
 def pending_orders_page():
-    return render_template('admin/pending_orders_page.html')
+    db_session = get_session()
+    pending_orders = db_session.query(Order).filter_by(order_status='pending').all()
+    for order in pending_orders:
+        db_session.refresh(order)
+    return render_template('admin/pending_orders_page.html', pending_orders=pending_orders)
 
+
+@admin.route('/mark-order-complete/<int:order_id>', methods=['GET', 'POST'])
+@admin_required
+@login_required
+def mark_order_complete(order_id):
+    db_session = get_session()
+    order = db_session.query(Order).get(order_id)
+
+    if not order:
+        flash("Order not found.", "danger")
+        return redirect(url_for('admin.pending_orders_page'))
+
+    if order.order_status != 'pending':
+        flash("This order cannot be marked as complete because it is not pending.", "danger")
+        return redirect(url_for('admin.pending_orders_page'))
+
+    payment_id = generate_payment_id()
+
+    order.order_status = 'confirmed'
+    order.payment_status = 'completed'
+    order.payment_id = payment_id
+    
+    try:
+        db_session.commit()
+        flash(f"Order {order_id} has been marked as complete. Payment ID: {payment_id}", "success")
+    except Exception as e:
+        db_session.rollback()
+        flash(f"An error occurred while updating the order: {str(e)}", "danger")
+
+    return redirect(url_for('admin.pending_orders_page'))
 
 
 @admin.route('/products/')
@@ -200,6 +248,16 @@ def add_product():
     categories = session_db.query(Category).all()
     session_db.close()
     return render_template('admin/add_product.html', categories=categories)
+
+
+@admin.route('/all-orders/')
+@admin_required
+@login_required
+def all_orders_page():
+    db_session = get_session()
+    orders = db_session.query(Order).all()
+    return render_template('admin/admin_orders.html', orders=orders)
+
 
 
 @admin.route('/products/update/<int:product_id>/', methods=['GET', 'POST'])
@@ -799,7 +857,6 @@ def profile():
     return render_template('profile.html', user=user)
 
 
-
 @main.route('/order-history/', methods=['GET'])
 def order_history():
     user_id = session.get('user_id')
@@ -807,13 +864,15 @@ def order_history():
     if not user_id:
         flash("You need to be logged in to view your order history.", 'danger')
         return redirect(url_for('login'))
+    
     db_session = get_session()
-
-    orders = db_session.query(Order).filter_by(user_id=user_id).options(
+    orders = db_session.query(Order).filter_by(user_id=user_id, payment_status='completed').options(
         joinedload(Order.products).joinedload(OrderProduct.product)
     ).all()
 
     if not orders:
-        flash("You have no order history.", 'info')
+        flash("You have no order history with completed payments.", 'info')
+    
     db_session.close()
+    
     return render_template('order_history.html', orders=orders)

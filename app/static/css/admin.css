@@ -519,6 +519,16 @@ table th {
   width: 150px;
 }
 
+.markComplete{
+  background-color: black !important;
+  height: 55px;
+  width: 185px;
+}
+
+.markCompleteA{
+  color: white !important;
+}
+
 .updateBtnLarge{
   height: 55px !important;
   width: 185px;

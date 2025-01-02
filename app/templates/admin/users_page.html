@@ -6,22 +6,8 @@
 
 {% block content %}
 <div class="container">
-    <!-- Flash Messages Section -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert-container">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- User List Section -->
     <div class="user-list">
-        <h2>User Management</h2>
+        <h2 class="text-center">User Management</h2>
         <table class="table">
             <thead>
                 <tr>

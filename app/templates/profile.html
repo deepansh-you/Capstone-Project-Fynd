@@ -7,15 +7,6 @@ Profile - PrimeLane
 {% block content %}
 <h1>Your Profile</h1>
 
-<!-- Filter out only profile-related flash messages -->
-{% for message in get_flashed_messages(with_categories=true) %}
-    {% if message[0] != 'success' or 'Item added to cart successfully' not in message[1] %}
-        <div class="alert alert-{{ message[0] }} mt-3">
-            {{ message[1] }}
-        </div>
-    {% endif %}
-{% endfor %}
-
 <form method="POST" action="{{ url_for('main.profile') }}">
     <div class="form-group">
         <label for="user_name">Name</label>

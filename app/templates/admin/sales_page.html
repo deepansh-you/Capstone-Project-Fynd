@@ -1,0 +1,43 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Sales Dashboard{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">Sales Dashboard</h1>
+    <hr>
+    <div class="card my-4">
+        <div class="card-body">
+            <h3 class="card-title">Total Sales</h3>
+            <p class="card-text fs-4"><strong>{{g.rupee_symbol}}{{ total_sales }}</strong></p>
+        </div>
+    </div>
+    <div class="card my-4">
+        <div class="card-body">
+            <h3 class="card-title">Top 5 Products</h3>
+            {% if top_products %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product Name</th>
+                            <th>Total Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for index, product in enumerate(top_products, start=1) %}
+                        <tr>
+                            <td>{{ index }}</td>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.total_quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>            
+            {% else %}
+                <p class="text-muted">No data available for top products.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

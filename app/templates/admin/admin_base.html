@@ -27,16 +27,23 @@
                             Products
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('admin.products') }}">View All Products</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.add_product') }}">Add Product</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.products') }}">View All Products</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Orders
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('admin.all_orders_page') }}"> View All Orders</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.pending_orders_page') }}">Pending Orders</a></li>
                         </ul>
                     </li>
 
                     <li class="nav-item">
                         <a href="{{ url_for('admin.sales_page') }}" class="nav-link">Sales</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('admin.pending_orders_page') }}" class="nav-link">Pending Orders</a>
                     </li>
                 </ul>
             </div>
