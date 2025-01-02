@@ -1,28 +1,35 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Your Order History</h1>
+    <div class="container">
+        <h1>Your Order History</h1>
 
-{% if orders %}
-    <ul>
-        {% for order in orders %}
-            <li>
-                <strong>Order ID:</strong> {{ order.order_id }}<br>
-                <strong>Total Amount:</strong> ₹{{ order.order_total_amount }}<br>
-                <strong>Order Date:</strong> {{ order.order_date.strftime('%d %b %Y %I:%M %p') }}<br> <!-- Display order_date -->
-                
-                <!-- Display Products in the Order -->
-                <strong>Products:</strong>
-                <ul>
-                    {% for order_product in order.products %}
-                        <li>{{ order_product.product.product_name }} (Quantity: {{ order_product.order_product_quantity }})</li>
-                    {% endfor %}
-                </ul>
-            </li>
-            <hr>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No orders found.</p>
-{% endif %}
+        {% if orders %}
+            <div class="row">
+                {% for order in orders %}
+                    <div class="col-12">
+                        <div class="order-card mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Order ID: {{ order.order_id }}</h5>
+                                    <p><strong>Total Amount:</strong> ₹{{ order.order_total_amount }}</p>
+                                    <p><strong>Order Date:</strong> {{ order.order_date.strftime('%d %b %Y %I:%M %p') }}</p>
+
+                                    <!-- Display Products in the Order -->
+                                    <p><strong>Products:</strong></p>
+                                    <ul>
+                                        {% for order_product in order.products %}
+                                            <li>{{ order_product.product.product_name }} (Quantity: {{ order_product.order_product_quantity }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No orders found.</p>
+        {% endif %}
+    </div>
 {% endblock %}

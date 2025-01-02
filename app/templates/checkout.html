@@ -5,28 +5,36 @@ Checkout - PrimeLane
 {% endblock %}
 
 {% block content %}
-    <h1>Checkout</h1>
-    <form method="POST" action="{{ url_for('main.checkout') }}">
-        <div class="mb-3">
-            <label for="user_name" class="form-label">Name</label>
-            <input type="text" id="user_name" name="user_name" class="form-control" 
-                   value="{{ user_details.user_name }}" required>
-        </div>
-        <div class="mb-3">
-            <label for="user_phone_number" class="form-label">Phone</label>
-            <input type="tel" id="user_phone_number" name="user_phone_number" class="form-control" 
-                   value="{{ user_details.user_phone_number }}" required>
-        </div>
-        <div class="mb-3">
-            <label for="user_address" class="form-label">Address</label>
-            <textarea id="user_address" name="user_address" class="form-control" 
-                      rows="3" required>{{ user_details.user_address }}</textarea>
-        </div>
-        <div class="mb-3">
-            <label for="user_email" class="form-label">Email</label>
-            <input type="email" id="user_email" name="user_email" class="form-control" 
-                   value="{{ user_details.user_email }}" required>
-        </div>
-        <button type="submit" class="btn btn-success">Proceed to Payment</button>
-    </form>
+    <div class="container">
+        <h1>Checkout</h1>
+        <form method="POST" action="{{ url_for('main.checkout') }}">
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div class="mb-3">
+                        <label for="user_name" class="form-label">Name</label>
+                        <input type="text" id="user_name" name="user_name" class="form-control" 
+                               value="{{ user_details.user_name }}" required>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="mb-3">
+                        <label for="user_phone_number" class="form-label">Phone</label>
+                        <input type="tel" id="user_phone_number" name="user_phone_number" class="form-control" 
+                               value="{{ user_details.user_phone_number }}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="user_address" class="form-label">Address</label>
+                <textarea id="user_address" name="user_address" class="form-control" 
+                          rows="3" required>{{ user_details.user_address }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="user_email" class="form-label">Email</label>
+                <input type="email" id="user_email" name="user_email" class="form-control" 
+                       value="{{ user_details.user_email }}" required>
+            </div>
+            <button type="submit" class="addToCart">Proceed to Payment</button>
+        </form>
+    </div>
 {% endblock %}

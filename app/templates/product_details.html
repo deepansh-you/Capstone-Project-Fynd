@@ -5,43 +5,45 @@ Product Details - {{ product.product_name }}
 {% endblock %}
 
 {% block content %}
-    <h1>{{ product.product_name }}</h1>
-    
-    {% if product.image_url %}
-        <div>
-            <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
-                 alt="{{ product.product_name }}" class="img-fluid">
-        </div>
-    {% endif %}
-    
-    <p><strong>Description:</strong> {{ product.product_description }}</p>
-    <p><strong>Price:</strong> {{ g.rupee_symbol}}{{ product.product_price }}</p>
-    <p><strong>Category:</strong> {{ product.category.category_name }}</p>
-    
-    {% if 1 <= product.product_quantity <= 10 %}
-        <p>Only {{ product.product_quantity }} left in stock!</p>
-    {% elif product.product_quantity > 10 %}
-        <p>In stock</p>
-    {% else %}
-        <p>Out of stock</p>
-    {% endif %}
+    <div class="container">
+        <h1>{{ product.product_name }}</h1>
+        
+        <div class="row">
+            {% if product.image_url %}
+                <div class="col-12 col-md-6">
+                    <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                         alt="{{ product.product_name }}" class="img-fluid">
+                </div>
+            {% endif %}
+            <div class="col-12 col-md-6">
+                <p><strong>Description:</strong> {{ product.product_description }}</p>
+                <p><strong>Price:</strong> {{ g.rupee_symbol}}{{ product.product_price }}</p>
+                <p><strong>Category:</strong> {{ product.category.category_name }}</p>
+                
+                {% if 1 <= product.product_quantity <= 10 %}
+                    <p>Only {{ product.product_quantity }} left in stock!</p>
+                {% elif product.product_quantity > 10 %}
+                    <p>In stock</p>
+                {% else %}
+                    <p>Out of stock</p>
+                {% endif %}
 
-    
-    {% if product.product_quantity > 0 %}
-        <!-- Add to Cart Form -->
-        <form action="{{ url_for('main.add_to_cart', product_id=product.product_id) }}" method="POST">
-            <div class="mb-3">
-                <label for="quantity" class="form-label">Quantity</label>
-                <select id="quantity" name="quantity" class="form-select" required>
-                    {% for i in range(1, 6) %}
-                        <option value="{{ i }}">{{ i }}</option>
-                    {% endfor %}
-                </select>
+                {% if product.product_quantity > 0 %}
+                    <form action="{{ url_for('main.add_to_cart', product_id=product.product_id) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <select id="quantity" name="quantity" class="form-select" required>
+                                {% for i in range(1, 6) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn addToCart">Add to Cart</button>
+                    </form>
+                {% else %}
+                    <p>Sorry, this product is out of stock.</p>
+                {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary">Add to Cart</button>
-        </form>
-    {% else %}
-        <p>Sorry, this product is out of stock.</p>
-    {% endif %}
-    
+        </div>
+    </div>
 {% endblock %}

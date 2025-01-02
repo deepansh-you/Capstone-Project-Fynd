@@ -5,8 +5,10 @@ Order Confirmation - PrimeLane
 {% endblock %}
 
 {% block content %}
-<h1>Thank You for Your Order!</h1>
-<p>Your payment was successful.</p>
+    <div class="container text-center">
+        <h1 class="mt-5">Thank You for Your Order!</h1>
+        <p>Your payment was successful.</p>
 
-<a href="{{ url_for('main.home') }}" class="btn btn-primary">Back to Home</a>
+        <button class="addToCart mb-5"><a href="{{ url_for('main.home') }}" class="text-decoration-none text-white">Back to Home</a></button>
+    </div>
 {% endblock %}

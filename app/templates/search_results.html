@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-PrimeLane : {{query}}
+PrimeLane : {{ query }}
 {% endblock %}
 
 {% block content %}
@@ -9,25 +9,25 @@ PrimeLane : {{query}}
     <p>{{ message }}</p>
     
     {% if results %}
-        <ul class="list-unstyled">
+        <div class="row">
             {% for product in results %}
-                <li class="mb-3">
-                    <a href="{{url_for('main.product_details', product_id=product.product_id)}}">
+                <div class="col-md-4 col-sm-6 col-lg-12 mb-3">
+                    <a href="{{ url_for('main.product_details', product_id=product.product_id) }}">
                         <div class="card">
                             <div class="row g-0">
                                 {% if product.image_url %}
-                                    <div class="col-md-4">
-                                        <img src="{{ url_for('static', filename='uploads/'+product.image_url) }}" 
-                                            class="img-fluid rounded-start" 
-                                            alt="{{ product.product_name }}">
+                                    <div class="col-md-12 col-lg-4">
+                                        <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                                             class="img-fluid rounded-start" 
+                                             alt="{{ product.product_name }}">
                                     </div>
                                 {% endif %}
-                                <div class="col-md-8">
+                                <div class="col-md-12 col-lg-8">
                                     <div class="card-body">
                                         <h5 class="card-title">{{ product.product_name }}</h5>
                                         <p class="card-text">{{ product.product_description }}</p>
                                         <p class="card-text">
-                                            <small class="text-muted">Price: {{g.rupee_symbol}}{{ product.product_price }}</small>
+                                            <small class="text-muted">Price: {{ g.rupee_symbol }}{{ product.product_price }}</small>
                                         </p>
                                         <p class="card-text">
                                             <small class="text-muted">Quantity: {{ product.product_quantity }}</small>
@@ -40,10 +40,8 @@ PrimeLane : {{query}}
                             </div>
                         </div>
                     </a>
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
-
-    <a href="{{ url_for('main.home') }}" class="btn btn-primary mt-4">Back to Home</a>
 {% endblock %}

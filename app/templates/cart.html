@@ -5,44 +5,50 @@ Cart - PrimeLane
 {% endblock %}
 
 {% block content %}
-    <h1>Your Cart</h1>
-    
-    {% if products_in_cart %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in products_in_cart %}
-                    <tr>
-                        <td>{{ item.product.product_name }}</td>
-                        <td>{{ g.rupee_symbol }}{{ item.product.product_price }}</td>
-                        <td>
-                            <form method="POST" action="{{ url_for('main.update_cart', cart_id=item.cart_id) }}">
-                                <button type="submit" name="action" value="decrease" class="btn btn-sm btn-outline-secondary">-</button>
-                                <span>{{ item.cart_quantity }}</span>
-                                <button type="submit" name="action" value="increase" class="btn btn-sm btn-outline-secondary">+</button>
-                            </form>
-                        </td>
-                        <td>{{ g.rupee_symbol }}{{ item.product.product_price * item.cart_quantity }}</td>
-                        <td>
-                            <form method="POST" action="{{ url_for('main.remove_from_cart', cart_id=item.cart_id) }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h3>Total: {{ g.rupee_symbol }}{{ total_price }}</h3>
-        <a href="{{ url_for('main.checkout') }}" class="btn btn-primary">Proceed to Checkout</a>
-    {% else %}
-        <p>Your cart is empty.</p>
-    {% endif %}
+    <div class="container">
+        <h1>Your Cart</h1>
+        
+        {% if products_in_cart %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in products_in_cart %}
+                            <tr>
+                                <td>{{ item.product.product_name }}</td>
+                                <td>{{ g.rupee_symbol }}{{ item.product.product_price }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('main.update_cart', cart_id=item.cart_id) }}">
+                                        <button type="submit" name="action" value="decrease" class="btn btn-sm btn-outline-secondary">-</button>
+                                        <span>{{ item.cart_quantity }}</span>
+                                        <button type="submit" name="action" value="increase" class="btn btn-sm btn-outline-secondary">+</button>
+                                    </form>
+                                </td>
+                                <td>{{ g.rupee_symbol }}{{ item.product.product_price * item.cart_quantity }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('main.remove_from_cart', cart_id=item.cart_id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between">
+                <h3>Total: {{ g.rupee_symbol }}{{ total_price }}</h3>
+                <button class="addToCart"><a href="{{ url_for('main.checkout') }}" class="text-white text-decoration-none">Proceed to Checkout</a></button>
+            </div>
+        {% else %}
+            <p>Your cart is empty.</p>
+        {% endif %}
+    </div>
 {% endblock %}
