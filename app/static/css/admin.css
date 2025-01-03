@@ -104,6 +104,15 @@ body {
   background-color: #e21e8a;
 }
 
+.navbar-toggler{
+  background-color: #ffffff !important;
+}
+
+.navbar-collapse{
+  background-color: #000000 !important;
+  width: 100% !important;
+}
+
 .dropdown-menu{
   background-color: #000000 !important;
 }
@@ -181,17 +190,26 @@ table th {
 
 /* Card Styling */
 .card {
-  background-color: #f4f4f4;
+  background-color: #000000 !important;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
-  max-width: 400px; 
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  color: white !important;
+  width: 80% !important;
+}
+
+.custom-card{
+  width: 100% !important;
+}
+
+.cardA{
+  width: 100% !important;
 }
 
 .card:hover {
@@ -206,6 +224,10 @@ table th {
 .card p {
   font-size: 18px;
   font-weight: bold;
+}
+
+.rowDashboard{
+  margin-bottom: 10px;
 }
 
 /* Alert Styling */
@@ -244,8 +266,7 @@ table th {
 }
 
 .user-info .card {
-  width: 400px;
-  margin-right: 40px;
+  width: 100%;
   background-color: black;
   color: white;
   border-radius: 10px;
@@ -375,7 +396,7 @@ table th {
 }
 
 .add-product-page form textarea {
-  height: 120px;
+  height: 45px;
   resize: vertical;
 }
 
@@ -585,4 +606,24 @@ select{
 
 label{
   font-size: 16px !important;
+}
+
+
+@media (max-width: 768px) {
+
+  .user-info .card {
+    width: 100% !important;
+  }
+
+  .rowDashboard{
+    margin-bottom: 0 !important;
+  }
+
+  .navbar-collapse{
+    background-color: #000000 !important;
+    width: 100% !important;
+    padding-bottom: 5% !important;
+  }
+
+
 }

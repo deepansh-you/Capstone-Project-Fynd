@@ -6,13 +6,13 @@ Product Details - {{ product.product_name }}
 
 {% block content %}
     <div class="container">
-        <h1>{{ product.product_name }}</h1>
+        <h1 class="mt-5 text-center mb-5">{{ product.product_name }}</h1>
         
         <div class="row">
             {% if product.image_url %}
                 <div class="col-12 col-md-6">
                     <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
-                         alt="{{ product.product_name }}" class="img-fluid">
+                         alt="{{ product.product_name }}" class="img-fluid prodImg">
                 </div>
             {% endif %}
             <div class="col-12 col-md-6">
@@ -38,7 +38,7 @@ Product Details - {{ product.product_name }}
                                 {% endfor %}
                             </select>
                         </div>
-                        <button type="submit" class="btn addToCart">Add to Cart</button>
+                        <button type="submit" class="btn addToCart mb-4">Add to Cart</button>
                     </form>
                 {% else %}
                     <p>Sorry, this product is out of stock.</p>

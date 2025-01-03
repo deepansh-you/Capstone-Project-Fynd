@@ -13,11 +13,14 @@
 
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-
             <a href="{{ url_for('admin.dashboard') }}" class="navbar-brand">Dashboard</a>
+    
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-            <div class="collapse navbar-collapse justify-content-end">
-                <ul class="navbar-nav">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto text-center">
                     <li class="nav-item">
                         <a href="{{ url_for('admin.users_page') }}" class="nav-link">Users</a>
                     </li>
@@ -37,7 +40,7 @@
                             Orders
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('admin.all_orders_page') }}"> View All Orders</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.all_orders_page') }}">View All Orders</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.pending_orders_page') }}">Pending Orders</a></li>
                         </ul>
                     </li>
@@ -45,14 +48,15 @@
                     <li class="nav-item">
                         <a href="{{ url_for('admin.sales_page') }}" class="nav-link">Sales</a>
                     </li>
-                </ul>
-            </div>
 
-            <div class="d-flex">
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
+                    <li class="nav-item">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
+    
 
 
     <div class="main-content">

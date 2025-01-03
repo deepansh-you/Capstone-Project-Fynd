@@ -4,32 +4,36 @@
     <h2 class="noPending text-center">Pending Orders</h2>
 
     {% if pending_orders %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Order ID</th>
-                    <th>User Name</th>
-                    <th>Total Amount</th>
-                    <th>Order Date</th>
-                    <th>Payment Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in pending_orders %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td>{{ order.order_id }}</td>
-                        <td>{{ order.user.user_name }}</td>
-                        <td>{{ order.order_total_amount }}</td>
-                        <td>{{ order.order_date.strftime('%d %b %Y') }}</td>
-                        <td>{{ order.payment_status }}</td>
-                        <td>
-                            <button class="markComplete"><a href="{{ url_for('admin.mark_order_complete', order_id=order.order_id) }}" class="markCompleteA">Mark as Complete</a></button>
-                        </td>
+                        <th>Order ID</th>
+                        <th>User Name</th>
+                        <th>Total Amount</th>
+                        <th>Order Date</th>
+                        <th>Payment Status</th>
+                        <th>Action</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for order in pending_orders %}
+                        <tr>
+                            <td>{{ order.order_id }}</td>
+                            <td>{{ order.user.user_name }}</td>
+                            <td>{{ order.order_total_amount }}</td>
+                            <td>{{ order.order_date.strftime('%d %b %Y') }}</td>
+                            <td>{{ order.payment_status }}</td>
+                            <td>
+                                <button class="markComplete">
+                                    <a href="{{ url_for('admin.mark_order_complete', order_id=order.order_id) }}" class="markCompleteA">Mark as Complete</a>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <p class="noPending text-center">No pending orders found.</p>
     {% endif %}

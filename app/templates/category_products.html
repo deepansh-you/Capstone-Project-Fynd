@@ -5,16 +5,17 @@ PrimeLane : {{ category.category_name }}
 {% endblock %}
 
 {% block content %}
-    <h1>Products in {{ category.category_name }}</h1>
+    <h1 class="mt-4 mb-3 text-center">Products in {{ category.category_name }}</h1>
     
     {% if category.category_description %}
         <p>{{ category.category_description }}</p>
     {% endif %}
     
     {% if products %}
+    <div class="container-fluid">
         <div class="row">
             {% for product in products %}
-                <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+                <div class="col-sm-6 col-md-6 col-lg-4 mb-3">
                     <a href="{{url_for('main.product_details', product_id=product.product_id)}}">
                         <div class="card">
                             <div class="row g-0">
@@ -25,7 +26,7 @@ PrimeLane : {{ category.category_name }}
                                             alt="{{ product.product_name }}">
                                     </div>
                                 {% endif %}
-                                <div class="col-12 col-md-8">
+                                <div class="col-12 col-md-8 col-sm-8">
                                     <div class="card-body">
                                         <h5 class="card-title">{{ product.product_name }}</h5>
                                         <p class="card-text">
@@ -42,6 +43,7 @@ PrimeLane : {{ category.category_name }}
                 </div>
             {% endfor %}
         </div>
+    </div>
     {% else %}
         <p>No products found in this category.</p>
     {% endif %}

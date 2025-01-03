@@ -6,17 +6,7 @@ Payment - PrimeLane
 
 {% block content %}
     <div class="container">
-        <h1>Proceed to Payment</h1>
-
-        <h2>Order Summary</h2>
-        <ul>
-            {% for item in products_in_cart %}
-                <li>{{ item.product.product_name }} - {{ item.cart_quantity }} x {{ g.rupee_symbol }}{{ item.product.product_price }}</li>
-            {% endfor %}
-        </ul>
-        <h3>Total: {{ g.rupee_symbol }}{{ total_price }}</h3>
-
-        <h2>Enter Payment Details</h2>
+        <h1 class="mt-5 mb-5 text-center">Enter Payment Details</h1>
         <form method="POST" action="{{ url_for('main.payment') }}" onsubmit="return validateForm()">
             <div class="row">
                 <div class="col-12 col-md-6">
@@ -27,7 +17,7 @@ Payment - PrimeLane
                     </div>
                 </div>
                 <div class="col-12 col-md-6">
-                    <div class="form-group">
+                    <div class="form-group cvvLabel">
                         <label for="expiry_date">Expiry Date (MM/YY)</label>
                         <input type="text" class="form-control" name="expiry_date" id="expiry_date" required placeholder="MM/YY" maxlength="5">
                         <small id="expiry_date_feedback"></small>
@@ -36,7 +26,7 @@ Payment - PrimeLane
             </div>
             <div class="row">
                 <div class="col-12 col-md-6">
-                    <div class="form-group">
+                    <div class="form-group mt-4 mb-3 cvvLabel">
                         <label for="cvv">CVV</label>
                         <input type="text" class="form-control" name="cvv" id="cvv" required maxlength="4" placeholder="CVV" oninput="validateCVV()">
                         <small id="cvv_feedback"></small>

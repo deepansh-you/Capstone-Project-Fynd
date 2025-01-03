@@ -15,35 +15,44 @@
         </div>
     </div>
 
+    <div class="row justify-content-center rowDashboard">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center">
+            <a href="{{ url_for('admin.users_page') }}" class="cardA">
+                <div class="card custom-card">
+                    <h3>Total Users</h3>
+                    <p>{{ total_users }}</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center">
+            <a href="{{ url_for('admin.products') }}" class="cardA">
+                <div class="card custom-card">
+                    <h3>Products</h3>
+                    <p>{{ total_products }}</p>
+                </div>
+            </a>
+        </div>
 
-    <div class="stats">
-        <a href="{{ url_for('admin.users_page') }}">
-            <div class="card">
-                <h3>Total Users</h3>
-                <p>{{ total_users }}</p>
-            </div>
-        </a>
-    
-        <a href="{{ url_for('admin.products') }}">
-            <div class="card">
-                <h3>Products</h3>
-                <p>{{ total_products }}</p>
-            </div>
-        </a>
-    
-        <a href="{{ url_for('admin.sales_page') }}">
-            <div class="card">
-                <h3>Total Sales</h3>
-                <p>₹{{ total_sales }}</p>
-            </div>
-        </a>
-    
-        <a href="{{ url_for('admin.pending_orders_page') }}">
-            <div class="card">
-                <h3>Pending Orders</h3>
-                <p>{{ pending_orders }}</p>
-            </div>
-        </a>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center">
+            <a href="{{ url_for('admin.sales_page') }}" class="cardA">
+                <div class="card custom-card">
+                    <h3>Total Sales</h3>
+                    <p>₹{{ total_sales }}</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center rowDashboard">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center">
+            <a href="{{ url_for('admin.pending_orders_page') }}" class="cardA">
+                <div class="card custom-card">
+                    <h3>Pending Orders</h3>
+                    <p>{{ pending_orders }}</p>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
