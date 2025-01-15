@@ -8,6 +8,14 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import or_, func
 import os, uuid
 from flask_mail import Message
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from io import BytesIO
+import base64
+import datetime
 
 
 main = Blueprint('main', __name__)
@@ -78,19 +86,15 @@ def dashboard():
     total_products = session_db.query(Product).count()
     
     pending_orders = session_db.query(Order).filter(Order.order_status == 'pending').count()
+    all_orders = session_db.query(Order).count()
     current_user = session_db.query(User).filter(User.user_id == session.get('user_id')).first()
     users = session_db.query(User).all()
-
-    notifications = [
-        "New product added.",
-        "New user registered.",
-        "Order #123 pending."
-    ]
 
     session_db.close()
 
     return render_template('admin/admin_dashboard.html', total_users=total_users, total_sales=total_sales, pending_orders=pending_orders, users=users,
-                           notifications=notifications, current_user=current_user, total_products= total_products, sidebar_hidden=True)
+                            current_user=current_user, total_products= total_products, sidebar_hidden=True, all_orders=all_orders)
+    
     
 
 @admin.route('/sales/', endpoint='sales_page')
@@ -101,9 +105,7 @@ def sales_page():
     total_sales_query = session_db.query(
         (Product.product_price * OrderProduct.order_product_quantity)
     ).join(OrderProduct).join(Order).filter(Order.order_status == 'confirmed').all()
-    
     total_sales = sum(price[0] for price in total_sales_query)
-
     top_products_query = (
         session_db.query(
             Product.product_name,
@@ -112,8 +114,25 @@ def sales_page():
         .join(OrderProduct)
         .group_by(Product.product_name)
         .order_by(func.sum(OrderProduct.order_product_quantity).desc())
+        .limit(5) 
         .all()
     )
+    
+    product_names = [product[0] for product in top_products_query]
+    total_quantities = [product[1] for product in top_products_query]
+
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(10, 6))
+    ax = sns.barplot(x=total_quantities, y=product_names, palette="Blues_d")
+    ax.set_title("Top 5 Products by Quantity Sold")
+    ax.set_xlabel("Total Quantity Sold")
+    ax.set_ylabel("Product Name")
+
+    img = BytesIO()
+    plt.savefig(img, format='png', bbox_inches='tight')
+    img.seek(0)
+    chart_url = base64.b64encode(img.getvalue()).decode()
+    plt.close()
 
     session_db.close()
 
@@ -121,6 +140,7 @@ def sales_page():
         'admin/sales_page.html',
         total_sales=total_sales,
         top_products=top_products_query,
+        chart_url=f"data:image/png;base64,{chart_url}",
         enumerate=enumerate
     )
     
@@ -352,6 +372,9 @@ def login():
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
         password = request.form['password']
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'danger')
+            return redirect(url_for('auth.login'))
 
         session_db = get_session()
         user = session_db.query(User).filter(User.user_email == email).first()
@@ -375,6 +398,7 @@ def login():
 
 
 
+
 @auth.route('/register/', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -383,6 +407,10 @@ def register():
         confirm_password = request.form['confirm_password']
         name = request.form['name']
         phone_number = request.form.get('phone_number')
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'danger')
+            return redirect(url_for('auth.register'))
 
         if password != confirm_password:
             flash('Password does not match. Please try again!', 'danger')
@@ -401,7 +429,13 @@ def register():
         else:
             role = 'user'
 
-        new_user = User(user_name=name, user_email=email, user_password=hashed_password, user_phone_number=phone_number, user_role=role)
+        new_user = User(
+            user_name=name,
+            user_email=email,
+            user_password=hashed_password,
+            user_phone_number=phone_number,
+            user_role=role
+        )
 
         session_db.add(new_user)
         session_db.commit()
@@ -411,6 +445,7 @@ def register():
         return redirect(url_for('auth.login'))
 
     return render_template('register.html')
+
 
 @auth.route('/logout/')
 def logout():
@@ -653,11 +688,18 @@ def checkout():
         user_phone_number = request.form.get('user_phone_number')
         user_address = request.form.get('user_address')
         user_email = request.form.get('user_email')
-
+        
         session['user_name'] = user_name
         session['user_phone_number'] = user_phone_number
         session['user_address'] = user_address
         session['user_email'] = user_email
+
+        if user:
+            user.user_name = user_name
+            user.user_phone_number = user_phone_number
+            user.user_address = user_address
+            user.user_email = user_email
+            db_session.commit()
 
         flash("Your details have been saved. Proceed to payment.", "success")
 
@@ -671,6 +713,7 @@ def checkout():
     }
 
     return render_template('checkout.html', user_details=user_details)
+
 
 
 def generate_payment_id():
@@ -763,7 +806,6 @@ def payment():
     return render_template('payment.html', products_in_cart=products_in_cart, total_price=total_price)
 
 
-
 def send_order_confirmation_email(user_email, order):
 
     db_session = get_session()
@@ -814,7 +856,6 @@ def order_confirmation_page():
 @main.route('/profile/', methods=['GET', 'POST'])
 def profile():
     user_id = session.get('user_id')
-
     db_session = get_session()
     user = db_session.query(User).get(user_id)
 
@@ -826,7 +867,7 @@ def profile():
         password = request.form['password']
 
         profile_updated = False
-        
+
         if user.user_name != user_name:
             user.user_name = user_name
             profile_updated = True
@@ -839,15 +880,21 @@ def profile():
         if user.user_address != user_address:
             user.user_address = user_address
             profile_updated = True
+
         if password:
-            user.password = generate_password_hash(password)
-            flash('Password changed successfully', 'success')
+            if len(password) < 8:
+                flash('Password must be at least 8 characters long.', 'danger')
+                return redirect(url_for('main.profile'))
+            user.user_password = generate_password_hash(password)
+            profile_updated = True
+            flash('Password changed successfully.', 'success')
+
         if profile_updated:
             db_session.commit()
-            flash('Profile updated successfully', 'success')
+            flash('Profile updated successfully.', 'success')
             session['profile_updated'] = True
         else:
-            db_session.commit()
+            flash('No changes made to the profile.', 'info')
 
         return redirect(url_for('main.profile'))
 

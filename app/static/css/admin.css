@@ -2,7 +2,7 @@
 *::before,
 *::after {
     box-sizing: border-box;
-    font-family: agrandir;
+    font-family: poppins;
     font-size: 16px;
     text-decoration: none !important;
 }
@@ -13,9 +13,10 @@ a {
 }
 
 @font-face {
-  font-family: agrandir;
-  src: url(../fonts/Agrandir-WideLight.otf);
+  font-family: poppins;
+  src: url(../fonts/Poppins-Light.ttf);
 }
+
 
 /* Body Styling */
 body {
@@ -535,6 +536,10 @@ table th {
   background-color: black;
 }
 
+.btn:hover{
+  background-color: #000000 !important;
+}
+
 .updateBtn{
   height: 55px !important;
   width: 150px;
@@ -571,6 +576,14 @@ th{
   font-size: 25px;
   width: 100px;
   text-align: center !important;
+}
+
+.cardSales{
+  width: 100% !important;
+}
+
+.cardsBGSales{
+  background-color: white !important;
 }
 
 td{
@@ -623,6 +636,10 @@ label{
     background-color: #000000 !important;
     width: 100% !important;
     padding-bottom: 5% !important;
+  }
+
+  .cardSales{
+    width: auto !important;
   }
 
 

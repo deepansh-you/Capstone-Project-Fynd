@@ -5,43 +5,41 @@ PrimeLane : {{ query }}
 {% endblock %}
 
 {% block content %}
-    <h1>Search Results</h1>
-    <p>{{ message }}</p>
-    
-    {% if results %}
-        <div class="row">
-            {% for product in results %}
-                <div class="col-md-4 col-sm-6 col-lg-12 mb-3">
-                    <a href="{{ url_for('main.product_details', product_id=product.product_id) }}">
-                        <div class="card">
-                            <div class="row g-0">
+    <div class="container my-4">
+        <h1 class="text-center">Search Results</h1>
+        <p class="text-center">{{ message }}</p>
+        
+        {% if results %}
+            <div class="row g-4">
+                {% for product in results %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <a href="{{ url_for('main.product_details', product_id=product.product_id) }}" class="text-decoration-none">
+                            <div class="card h-100">
                                 {% if product.image_url %}
-                                    <div class="col-md-12 col-lg-4">
-                                        <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
-                                             class="img-fluid rounded-start" 
-                                             alt="{{ product.product_name }}">
-                                    </div>
+                                    <img src="{{ url_for('static', filename='uploads/' + product.image_url) }}" 
+                                         class="card-img-top" 
+                                         alt="{{ product.product_name }}">
                                 {% endif %}
-                                <div class="col-md-12 col-lg-8">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ product.product_name }}</h5>
-                                        <p class="card-text">{{ product.product_description }}</p>
-                                        <p class="card-text">
-                                            <small class="text-muted">Price: {{ g.rupee_symbol }}{{ product.product_price }}</small>
-                                        </p>
-                                        <p class="card-text">
-                                            <small class="text-muted">Quantity: {{ product.product_quantity }}</small>
-                                        </p>
-                                        <p class="card-text">
-                                            <small class="text-muted">Category: {{ product.category.category_name }}</small>
-                                        </p>
-                                    </div>
+                                <div class="card-body">
+                                    <h5 class="card-title text-truncate">{{ product.product_name }}</h5>
+                                    <p class="card-text text-truncate">{{ product.product_description }}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">Price: {{ g.rupee_symbol }}{{ product.product_price }}</small>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">Quantity: {{ product.product_quantity }}</small>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">Category: {{ product.category.category_name }}</small>
+                                    </p>
                                 </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-center">No results found.</p>
+        {% endif %}
+    </div>
 {% endblock %}

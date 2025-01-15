@@ -1,12 +1,16 @@
-/* General Body Styles */
 @font-face {
-    font-family: agrandir;
-    src: url(../fonts/Agrandir-WideLight.otf);
-  }
+    font-family: poppins;
+    src: url(../fonts/Poppins-Light.ttf);
+}
+
 
 *{
     box-sizing: border-box;
-    font-family: agrandir;
+    font-family: poppins;
+}
+
+p{
+    font-family: poppins;
 }
 
 body {
@@ -199,6 +203,12 @@ footer p {
     height: 55px;
     border-radius: 10px;
 }
+
+.addToCart:hover{
+    background-color: #000000 !important;
+    color: white !important;
+}
+
 
 .addToCartA{
     color: white;

@@ -6,37 +6,22 @@
 <div class="container my-5">
     <h1 class="text-center">Sales Dashboard</h1>
     <hr>
-    <div class="card my-4">
-        <div class="card-body">
-            <h3 class="card-title">Total Sales</h3>
-            <p class="card-text fs-4"><strong>{{g.rupee_symbol}}{{ total_sales }}</strong></p>
+    <div class="d-flex justify-content-center flex-column align-items-center">
+        <div class="card my-4 w-75">
+            <div class="card-body">
+                <h3 class="card-title">Total Sales</h3>
+                <p class="card-text fs-4"><strong>{{ g.rupee_symbol }}{{ total_sales }}</strong></p>
+            </div>
         </div>
-    </div>
-    <div class="card my-4">
-        <div class="card-body">
-            <h3 class="card-title">Top 5 Products</h3>
-            {% if top_products %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Product Name</th>
-                            <th>Total Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for index, product in enumerate(top_products, start=1) %}
-                        <tr>
-                            <td>{{ index }}</td>
-                            <td>{{ product.product_name }}</td>
-                            <td>{{ product.total_quantity }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>            
-            {% else %}
-                <p class="text-muted">No data available for top products.</p>
-            {% endif %}
+        <div class="card my-4 w-75 cardsBGSales">
+            <div class="card-body cardSales">
+                <h3 class="card-title text-dark mb-5">Top Products Chart</h3>
+                {% if chart_url %}
+                    <img src="{{ chart_url }}" alt="Top Products Chart" class="img-fluid">
+                {% else %}
+                    <p class="text-muted">Chart is not available.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
